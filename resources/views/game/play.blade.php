@@ -640,7 +640,7 @@
                 }
                 this.say('gameplay');
 
-                setTimeout(() => this.closeQuestionAndFollowUp(data), data.correct ? 1200 : 2000);
+                setTimeout(() => this.closeQuestionAndFollowUp(data), data.correct ? 5000 : 5000);
             },
 
             closeQuestionAndFollowUp(data) {
