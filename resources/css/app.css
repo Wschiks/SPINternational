@@ -1,3 +1,121 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+    .spin-font {
+        font-family: 'Press Start 2P', 'Courier New', monospace;
+    }
+
+    .neon-glow {
+        text-shadow:
+            0 0 5px currentColor,
+            0 0 10px currentColor,
+            0 0 20px currentColor;
+    }
+
+    .neon-box {
+        box-shadow:
+            0 0 6px currentColor,
+            0 0 14px currentColor;
+    }
+
+    .crt-overlay {
+        background: repeating-linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.15),
+            rgba(0, 0, 0, 0.15) 1px,
+            transparent 1px,
+            transparent 2px
+        );
+        pointer-events: none;
+    }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.08); }
+}
+
+.pulse-glow {
+    animation: pulse-glow 0.9s ease-in-out infinite;
+}
+
+/* ============ 7-segment LED digit ============ */
+.digit-7seg {
+    position: relative;
+    width: clamp(16px, 6vw, 28px);
+    aspect-ratio: 0.55;
+    margin: 0 1px;
+}
+
+.digit-7seg .seg {
+    position: absolute;
+    background: #ff2222;
+    box-shadow: 0 0 6px #ff2222, 0 0 12px #ff2222;
+    transition: opacity 0.08s linear, background 0.08s linear, box-shadow 0.08s linear;
+}
+
+.digit-7seg .seg.off {
+    background: #3a0808;
+    box-shadow: none;
+}
+
+.digit-7seg .seg-a { top: 0%;   left: 15%; width: 70%; height: 10%; clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%); }
+.digit-7seg .seg-g { top: 45%;  left: 15%; width: 70%; height: 10%; clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%); }
+.digit-7seg .seg-d { top: 90%;  left: 15%; width: 70%; height: 10%; clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%); }
+.digit-7seg .seg-f { top: 7%;   left: 4%;  width: 13%; height: 39%; clip-path: polygon(0% 10%, 50% 0%, 100% 10%, 100% 90%, 50% 100%, 0% 90%); }
+.digit-7seg .seg-b { top: 7%;   left: 83%; width: 13%; height: 39%; clip-path: polygon(0% 10%, 50% 0%, 100% 10%, 100% 90%, 50% 100%, 0% 90%); }
+.digit-7seg .seg-e { top: 54%;  left: 4%;  width: 13%; height: 39%; clip-path: polygon(0% 10%, 50% 0%, 100% 10%, 100% 90%, 50% 100%, 0% 90%); }
+.digit-7seg .seg-c { top: 54%;  left: 83%; width: 13%; height: 39%; clip-path: polygon(0% 10%, 50% 0%, 100% 10%, 100% 90%, 50% 100%, 0% 90%); }
+
+/* ============ retro cabinet buttons ============ */
+.arcade-btn {
+    position: relative;
+    border-radius: 0.5rem;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.45), inset 0 2px 0 rgba(255, 255, 255, 0.25);
+    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.arcade-btn:not(:disabled):hover {
+    filter: brightness(1.1);
+}
+
+.arcade-btn:not(:disabled):active {
+    transform: translateY(3px) scale(0.97);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.45), inset 0 2px 0 rgba(255, 255, 255, 0.2);
+}
+
+.arcade-btn:disabled {
+    opacity: 0.35;
+    box-shadow: none;
+    cursor: default;
+}
+
+/* ============ slot reel strip ============ */
+.reel-window {
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+}
+
+.reel-strip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    will-change: transform;
+}
+
+.reel-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reel-window.is-spinning .reel-item img {
+    filter: blur(2px);
+}
