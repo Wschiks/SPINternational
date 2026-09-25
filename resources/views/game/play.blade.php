@@ -18,6 +18,41 @@
             ],
         ];
     @endphp
+
+        <!--MENU-->
+    <div class="absolute top-3 left-3 z-50" x-data="{ menuOpen: false }" @keydown.escape.window="menuOpen = false">
+        <button type="button"
+                @click="menuOpen = !menuOpen"
+                class="arcade-btn w-10 h-10 flex flex-col items-center justify-center gap-[3px] bg-[#1a1a3a] border-indigo-400"
+                :class="menuOpen ? 'ring-2 ring-fuchsia-500' : ''"
+                aria-label="Menu">
+            <span class="block w-5 h-[2px] bg-cyan-300 transition-transform" :class="menuOpen ? 'translate-y-[5px] rotate-45' : ''"></span>
+            <span class="block w-5 h-[2px] bg-cyan-300 transition-opacity" :class="menuOpen ? 'opacity-0' : 'opacity-100'"></span>
+            <span class="block w-5 h-[2px] bg-cyan-300 transition-transform" :class="menuOpen ? '-translate-y-[5px] -rotate-45' : ''"></span>
+        </button>
+
+        <div x-show="menuOpen" x-cloak x-transition.opacity
+             class="fixed inset-0 z-40 bg-black/60"
+             @click="menuOpen = false"></div>
+
+        <div x-show="menuOpen" x-cloak
+             x-transition:enter="transition ease-out duration-150"
+             x-transition:enter-start="opacity-0 -translate-x-2"
+             x-transition:enter-end="opacity-100 translate-x-0"
+             x-transition:leave="transition ease-in duration-100"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="absolute top-12 left-0 z-50 w-44 rounded-xl border-2 border-indigo-400 bg-gradient-to-b from-[#1a1a3a] to-[#0d0d1f] shadow-[0_0_15px_rgba(99,102,241,0.5)] p-2 flex flex-col gap-1.5">
+
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit"
+                        class="arcade-btn w-full px-3 py-2 rounded-lg bg-orange-600 text-white text-[10px] font-bold">
+                    UITLOGGEN
+                </button>
+            </form>
+        </div>
+    </div>
     <div class="min-h-screen flex items-center justify-center py-6"
          x-data='gameApp(@json($categories), @json($themes), @json($ledKrans), @json($assetPaths))' x-init="init()">
         <div class="max-w-md mx-auto px-3">
