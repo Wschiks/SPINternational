@@ -12,7 +12,8 @@ export function reelsMixin() {
         spinning: false,
 
         canSpin() {
-            return this.started && !this.spinning && !this.hasQuestion && !this.ledActive && !this.themeBlinkActive;
+            return this.started && !this.isWon && this.score >= this.spinCost && this.reels.some((reel) => !reel.held)
+                && !this.spinning && !this.hasQuestion && !this.ledActive && !this.themeBlinkActive;
         },
         canHold(i) {
             return this.started && !this.spinning && !this.hasQuestion && this.hasReelResult && !this.reels[i].held;
@@ -25,7 +26,16 @@ export function reelsMixin() {
             if (!this.canSpin()) return;
             this.spinning = true;
 
-            const data = await this.api('POST', `/game/${this.sessionId}/spin`, {});
+            let data;
+            try {
+                data = await this.api('POST', `/game/${this.sessionId}/spin`, {});
+                this.applyState(data);
+                this.message = `Spin: -${this.spinCost} punten`;
+            } catch (error) {
+                this.spinning = false;
+                this.message = error.message || 'Spinnen is niet gelukt. Probeer opnieuw.';
+                return;
+            }
             const durations = [1300, 1650, 2000]; // ms — staggered stop, reel 1 lands first
 
             // Held reels stay put — no strip animation for those.
@@ -65,7 +75,7 @@ export function reelsMixin() {
                 this.hasReelResult = true;
                 this.matchType = data.match_type;
                 this.lastPointsLabel = String(this.previewPoints(data.reels));
-                this.message = data.match_type === 'none' ? 'Give it a spin' : `${data.match_type} match!`;
+                this.message = 'Kies HOLD en verdien punten met een goed antwoord!';
             }, Math.max(...durations) + 80);
         },
 
@@ -84,7 +94,7 @@ export function reelsMixin() {
                 const data = await this.api('POST', `/game/${this.sessionId}/hold`, { reel: i + 1 });
                 this.applyState(data.state);
                 this.heldReelIndex = i;
-                this.openQuestion(data.question, false, null);
+                this.openQuestion(data.question, false, null, data.points);
             } catch (e) {}
         },
 

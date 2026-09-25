@@ -27,7 +27,7 @@ export function themeMixin(themes) {
             try {
                 const data = await this.api('POST', `/game/${this.sessionId}/theme/select`, { theme_id: themeId });
                 this.applyState(data.state);
-                this.openQuestion(data.question, true, data.slot);
+                this.openQuestion(data.question, true, data.slot, data.points);
             } catch (e) {}
         },
 

@@ -44,6 +44,7 @@ class GameEngine
         ]);
 
         $this->badgeboard->createEmpty($session);
+        $this->score->award($session, GameCatalog::STARTING_POINTS, 'starting_points', null);
 
         $user->increment('games_played');
 
@@ -67,9 +68,23 @@ class GameEngine
     {
         $this->assertActive($session);
 
-        if ($session->current_question_id) {
+        if ($session->current_question_id || $session->current_theme_question_id) {
             throw new RuntimeException('Cannot spin while a question is active.');
         }
+
+        if ($session->led_krans_pending) {
+            throw new RuntimeException('Pak eerst je bonus met STOP.');
+        }
+
+        if (count($session->held_reels ?? []) === 3) {
+            throw new RuntimeException('Maak eerst een rol vrij om te spinnen.');
+        }
+
+        if ($session->current_score < GameCatalog::SPIN_COST) {
+            throw new RuntimeException('Niet genoeg punten. Een spin kost '.GameCatalog::SPIN_COST.' punten.');
+        }
+
+        $this->score->award($session, -GameCatalog::SPIN_COST, 'spin_cost', null);
 
         return $this->reels->spin($session);
     }
@@ -241,6 +256,7 @@ class GameEngine
             'session_id' => $session->id,
             'level_selected' => $session->level_selected,
             'current_score' => $session->current_score,
+            'spin_cost' => GameCatalog::SPIN_COST,
             'is_won' => $session->is_won,
             'reels' => $session->current_reel_result,
             'match_type' => $session->current_match_type,

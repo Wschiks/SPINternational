@@ -9,6 +9,10 @@ namespace App\Support;
  */
 class GameCatalog
 {
+    public const STARTING_POINTS = 100;
+
+    public const SPIN_COST = 10;
+
     public const CATEGORIES = [
         1 => ['name' => 'Erasmus+', 'emoji' => '🇪🇺'],
         2 => ['name' => 'Europa', 'emoji' => '🌍'],

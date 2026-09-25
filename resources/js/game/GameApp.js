@@ -27,7 +27,7 @@ const MESSAGES = {
  *   assets.js    — image URL helpers
  *   api.js       — fetch + CSRF wrapper
  */
-export function createGameApp(categories, themes, ledKrans, assetPaths) {
+export function createGameApp(categories, themes, ledKrans, assetPaths, pointRules) {
     return {
         categories,
         SEG_LIST,
@@ -37,6 +37,8 @@ export function createGameApp(categories, themes, ledKrans, assetPaths) {
         sessionId: null,
         level: 1,
         score: 0,
+        spinCost: pointRules.spinCost,
+        scoreChange: null,
         lastPointsLabel: '0',
         message: 'Give it a spin',
         isWon: false,
@@ -65,9 +67,11 @@ export function createGameApp(categories, themes, ledKrans, assetPaths) {
         },
 
         applyState(state) {
+            this.scoreChange = this.sessionId === state.session_id ? state.current_score - this.score : null;
             this.sessionId = state.session_id;
             this.level = state.level_selected;
             this.score = state.current_score;
+            this.spinCost = state.spin_cost;
             this.badge = state.badgeboard;
             this.themes = state.themes;
             this.themeCredits = state.theme_credits;
@@ -78,7 +82,7 @@ export function createGameApp(categories, themes, ledKrans, assetPaths) {
             const state = await this.api('POST', '/game/start', { level: this.startLevel });
             this.applyState(state);
             this.started = true;
-            this.say('gameplay');
+            this.message = `Je start met ${this.score} punten. Kies SPIN!`;
         },
 
         say(category) {
@@ -120,7 +124,7 @@ export function createGameApp(categories, themes, ledKrans, assetPaths) {
                 try {
                     const data = await this.api('POST', `/game/${this.sessionId}/theme/select`, { theme_id: themeId });
                     this.applyState(data.state);
-                    this.openQuestion(data.question, true, data.slot);
+                    this.openQuestion(data.question, true, data.slot, data.points);
                 } catch (e) {}
                 this.resumeFollowUps();
             }
@@ -136,7 +140,7 @@ export function createGameApp(categories, themes, ledKrans, assetPaths) {
             if (!this.hasQuestion || this.isThemeQuestion) return;
             const data = await this.api('POST', `/game/${this.sessionId}/skip`, {});
             this.applyState(data.state);
-            this.openQuestion(data.question, false, null);
+            this.openQuestion(data.question, false, null, data.points);
             this.lastPointsLabel = '-20';
             this.message = 'Skipped';
         },

@@ -54,7 +54,7 @@
         </div>
     </div>
     <div class="min-h-screen flex items-center justify-center py-6"
-         x-data='gameApp(@json($categories), @json($themes), @json($ledKrans), @json($assetPaths))' x-init="init()">
+         x-data='gameApp(@json($categories), @json($themes), @json($ledKrans), @json($assetPaths), { spinCost: @json($spinCost) })' x-init="init()">
         <div class="max-w-md mx-auto px-3">
             <div class="relative rounded-[2rem] bg-black text-white p-3 shadow-[0_0_25px_rgba(99,102,241,0.5)] spin-font">
 
@@ -63,6 +63,11 @@
                     <div class="flex flex-col items-center justify-center gap-6 py-16 text-center">
                         <img src="{{ asset('images/game/logo.png') }}" alt="SPINternational" class="w-56 drop-shadow-[0_0_15px_rgba(255,0,110,0.6)]">
                         <p class="text-[10px] text-gray-400 max-w-xs leading-relaxed">Educatieve fruitmachine — beantwoord vragen, activeer thema's, win het spel.</p>
+                        <div class="rounded-lg border border-cyan-400/40 bg-cyan-950 p-4 text-xs leading-relaxed">
+                            <p>Je begint met <strong>{{ $startingPoints }} punten</strong>.</p>
+                            <p>Elke spin kost <strong>{{ $spinCost }} punten</strong>.</p>
+                            <p class="text-green-300">Goed antwoord: +10 tot +50 punten.</p>
+                        </div>
                         <div class="flex items-center gap-2 text-[10px]">
                             <span>Level:</span>
                             <template x-for="lvl in [1,2,3]" :key="lvl">
@@ -165,8 +170,10 @@
                         </div>
 
                         <!-- SCORE readout: real 7-segment LED digits -->
-                        <div class="flex justify-center">
-                            <div class="flex px-3 py-2 rounded-lg bg-black border-2 border-slate-600 shadow-inner">
+                        <div class="flex flex-col items-center gap-2 rounded-xl border border-cyan-400/50 bg-black p-3" role="status" aria-live="polite" aria-atomic="true">
+                            <div class="text-xs font-bold tracking-widest text-cyan-200">JOUW PUNTEN</div>
+                            <span class="sr-only" x-text="score + ' punten'"></span>
+                            <div aria-hidden="true" class="flex px-3 py-2 rounded-lg bg-black border-2 border-slate-600 shadow-inner">
                                 <template x-for="(d, di) in scoreDigits" :key="'sd'+di">
                                     <div class="digit-7seg">
                                         <template x-for="seg in SEG_LIST" :key="seg">
@@ -175,6 +182,10 @@
                                     </div>
                                 </template>
                             </div>
+                            <p class="text-xs font-bold" x-show="scoreChange !== null && scoreChange !== 0"
+                               :class="scoreChange > 0 ? 'text-green-300' : 'text-orange-300'"
+                               x-text="(scoreChange > 0 ? '+' : '') + scoreChange + ' punten'"></p>
+                            <p class="text-[10px] text-gray-300"><span x-text="spinCost"></span> punten per spin · Goed antwoord: +10 tot +50</p>
                         </div>
                     </div>
 
@@ -265,10 +276,16 @@
                                     <span x-text="reel.held ? 'HELD' : 'HOLD'"></span>
                                 </button>
                             </template>
-                            <button type="button" class="arcade-btn flex-1 py-3 bg-green-600 text-white text-[10px] font-bold" @click="spin()" :disabled="!canSpin()">
+                            <button type="button" class="arcade-btn flex-1 py-3 bg-green-600 text-white text-[10px] font-bold disabled:opacity-40 disabled:cursor-not-allowed" @click="spin()" :disabled="!canSpin()">
                                 <span x-text="spinning ? '...' : 'SPIN'"></span>
+                                <span class="block text-[9px]" x-text="'-' + spinCost + ' pnt'"></span>
                             </button>
                         </div>
+                        <div x-show="score < spinCost && !hasQuestion && !spinning && !isWon" class="mt-3 rounded-lg border border-orange-400/50 bg-orange-950 p-3 text-center text-[10px] leading-relaxed">
+                            <p>Te weinig punten voor een spin. Kies HOLD bij een vrije rol en beantwoord een vraag om punten te verdienen.</p>
+                            <button type="button" class="mt-2 rounded bg-orange-600 px-3 py-2 font-bold" @click="location.reload()">Nieuw spel</button>
+                        </div>
+                        <p x-show="reels.every((reel) => reel.held) && !isWon" class="mt-2 text-center text-[10px] text-cyan-200">Klik op HELD om een rol vrij te maken voor je volgende spin.</p>
                     </div>
 
                     <!-- QUESTION MODAL -->
@@ -276,6 +293,10 @@
                         <div class="bg-[#1a1a2e] border-2 border-fuchsia-600 rounded-xl p-5 max-w-md w-full text-xs max-h-[85vh] overflow-y-auto">
                             <div class="text-yellow-300 mb-2" x-show="isThemeQuestion">🎯 THEME QUESTION <span x-text="themeSlot"></span>/3</div>
                             <div class="text-cyan-300 mb-1" x-text="question?.category_name ?? question?.theme_name"></div>
+                            <div class="mb-3 flex flex-wrap justify-between gap-2 text-xs">
+                                <span class="text-green-300" x-show="!feedback">Goed antwoord: <strong x-text="'+' + questionPoints + ' punten'"></strong></span>
+                                <span class="text-cyan-200">Jouw punten: <strong x-text="score"></strong></span>
+                            </div>
                             <div class="mb-3" x-text="question?.text"></div>
 
                             <div x-show="question?.image_path" class="mb-3 h-32 bg-gray-800 border border-gray-600 rounded flex items-center justify-center text-[9px] text-gray-400">
@@ -286,6 +307,7 @@
                                 <div class="mb-3 p-2 rounded" :class="feedback.correct ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'">
                                     <div x-text="feedback.correct ? '✓ Correct!' : '✗ Helaas'"></div>
                                     <div class="mt-1 text-gray-200" x-text="feedback.text"></div>
+                                    <div class="mt-2 text-sm font-bold" x-text="feedback.correct ? '+' + feedback.points + ' punten verdiend!' : 'Geen punten erbij.'"></div>
                                 </div>
                             </template>
 

@@ -10,12 +10,15 @@ export function questionMixin() {
         draft: null,
         feedback: null,
         pairPending: null,
+        questionPoints: 0,
+        submitting: false,
 
-        openQuestion(q, isTheme, slot) {
+        openQuestion(q, isTheme, slot, points) {
             this.question = q;
             this.isThemeQuestion = isTheme;
             this.themeSlot = slot;
             this.hasQuestion = true;
+            this.questionPoints = points;
             this.feedback = null;
             this.draft = ['mc_2goed', 'mc_3goed', 'volgorde', 'matching', 'sleep'].includes(q.type) ? [] : null;
         },
@@ -65,18 +68,27 @@ export function questionMixin() {
         },
 
         async submit() {
-            if (this.draft === null || this.draft === undefined) return;
+            if (this.submitting || this.feedback || this.draft === null || this.draft === undefined) return;
+            this.submitting = true;
             const path = this.isThemeQuestion
                 ? `/game/${this.sessionId}/theme-answer`
                 : `/game/${this.sessionId}/answer`;
-            const data = await this.api('POST', path, { question_id: this.question.id, answer: this.draft });
-            this.feedback = { correct: data.correct, text: data.feedback };
+            let data;
+            try {
+                data = await this.api('POST', path, { question_id: this.question.id, answer: this.draft });
+            } catch (error) {
+                this.message = error.message || 'Antwoord versturen is niet gelukt. Probeer opnieuw.';
+                return;
+            } finally {
+                this.submitting = false;
+            }
+            this.feedback = { correct: data.correct, text: data.feedback, points: data.points_awarded };
             this.applyState(data.state);
 
             if (data.correct) {
                 this.lastPointsLabel = String(data.points_awarded);
             }
-            this.say('gameplay');
+            this.message = data.correct ? `Goed antwoord! +${data.points_awarded} punten` : 'Helaas, geen punten erbij.';
 
             setTimeout(() => this.closeQuestionAndFollowUp(data), data.correct ? 1200 : 2000);
         },
