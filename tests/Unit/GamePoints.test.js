@@ -7,14 +7,44 @@ function playableReels() {
     return { ...reelsMixin(), started: true, score: 100, spinCost: 10, sessionId: 1 };
 }
 
-test('spinning requires enough points and a free reel', () => {
+test('spinning requires enough points, even with every reel held', () => {
     const game = playableReels();
     game.score = 9;
     assert.equal(game.canSpin(), false);
     game.score = 10;
     assert.equal(game.canSpin(), true);
     game.reels.forEach((reel) => { reel.held = true; });
-    assert.equal(game.canSpin(), false);
+    assert.equal(game.canSpin(), true);
+});
+
+test('a reel cannot be held again after its question, even when answered wrong', () => {
+    const game = { ...playableReels(), ...questionMixin(), hasReelResult: true, runLedKrans: () => {} };
+    game.heldReelIndex = 0;
+    game.closeQuestionAndFollowUp({ correct: false });
+
+    assert.equal(game.reels[0].held, false);
+    assert.equal(game.canHold(0), false);
+    assert.equal(game.canHold(1), true);
+});
+
+test('spinning with every reel held releases them all', async (context) => {
+    context.mock.method(globalThis, 'setTimeout', () => 0);
+    const previousAnimationFrame = globalThis.requestAnimationFrame;
+    globalThis.requestAnimationFrame = (callback) => callback();
+    context.after(() => {
+        if (previousAnimationFrame) globalThis.requestAnimationFrame = previousAnimationFrame;
+        else delete globalThis.requestAnimationFrame;
+    });
+    const game = playableReels();
+    game.reels.forEach((reel) => { reel.held = true; });
+    game.api = async () => ({ current_score: 90, reels: [1, 2, 3], match_type: 'none' });
+    game.applyState = (state) => { game.score = state.current_score; };
+    game.$nextTick = async () => {};
+    game.$root = { querySelectorAll: () => [] };
+
+    await game.spin();
+
+    assert.ok(game.reels.every((reel) => !reel.held && !reel.used && reel.spinning));
 });
 
 test('the charged balance appears before the reels finish animating', async (context) => {

@@ -40,6 +40,7 @@ class GameEngine
             'used_question_ids' => [],
             'used_theme_question_ids' => [],
             'held_reels' => [],
+            'used_reels' => [],
             'current_score' => 0,
         ]);
 
@@ -74,10 +75,6 @@ class GameEngine
 
         if ($session->led_krans_pending) {
             throw new RuntimeException('Pak eerst je bonus met STOP.');
-        }
-
-        if (count($session->held_reels ?? []) === 3) {
-            throw new RuntimeException('Maak eerst een rol vrij om te spinnen.');
         }
 
         if ($session->current_score < GameCatalog::SPIN_COST) {
@@ -152,6 +149,9 @@ class GameEngine
             // keep showing this symbol on future spins until unheld.
             $this->reels->lockCurrentReel($session);
         }
+
+        // Right or wrong, this reel can't be held again until the next spin.
+        $this->reels->markCurrentReelUsed($session);
 
         $session->update([
             'current_category_id' => null,
@@ -261,6 +261,7 @@ class GameEngine
             'reels' => $session->current_reel_result,
             'match_type' => $session->current_match_type,
             'held_reels' => $session->held_reels ?? [],
+            'used_reels' => $session->used_reels ?? [],
             'current_category_id' => $session->current_category_id,
             'current_question_id' => $session->current_question_id,
             'current_theme_id' => $session->current_theme_id,

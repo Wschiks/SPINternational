@@ -2,9 +2,9 @@
 export function reelsMixin() {
     return {
         reels: [
-            { items: [null], offset: 0, transitionMs: 0, spinning: false, held: false },
-            { items: [null], offset: 0, transitionMs: 0, spinning: false, held: false },
-            { items: [null], offset: 0, transitionMs: 0, spinning: false, held: false },
+            { items: [null], offset: 0, transitionMs: 0, spinning: false, held: false, used: false },
+            { items: [null], offset: 0, transitionMs: 0, spinning: false, held: false, used: false },
+            { items: [null], offset: 0, transitionMs: 0, spinning: false, held: false, used: false },
         ],
         hasReelResult: false,
         heldReelIndex: null,
@@ -12,11 +12,11 @@ export function reelsMixin() {
         spinning: false,
 
         canSpin() {
-            return this.started && !this.isWon && this.score >= this.spinCost && this.reels.some((reel) => !reel.held)
-                && !this.spinning && !this.hasQuestion && !this.ledActive && !this.themeBlinkActive;
+            return this.started && !this.isWon && this.score >= this.spinCost
+                &&!this.spinning && !this.hasQuestion && !this.ledActive && !this.themeBlinkActive;
         },
         canHold(i) {
-            return this.started && !this.spinning && !this.hasQuestion && this.hasReelResult && !this.reels[i].held;
+            return this.started && !this.spinning && !this.hasQuestion && this.hasReelResult && !this.reels[i].held && !this.reels[i].used;
         },
         canUnhold(i) {
             return this.started && !this.spinning && !this.hasQuestion && !this.ledActive && !this.themeBlinkActive && this.reels[i].held;
@@ -37,6 +37,14 @@ export function reelsMixin() {
                 return;
             }
             const durations = [1300, 1650, 2000]; // ms — staggered stop, reel 1 lands first
+
+            // All 3 reels held: the server released them, so all of them spin.
+            if (this.reels.every((reel) => reel.held)) {
+                this.reels.forEach((reel) => { reel.held = false; });
+            }
+
+            // A new spin makes every reel holdable again.
+            this.reels.forEach((reel) => { reel.used = false; });
 
             // Held reels stay put — no strip animation for those.
             this.reels.forEach((reel, i) => {

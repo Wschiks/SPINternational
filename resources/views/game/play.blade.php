@@ -271,7 +271,7 @@
                             <button type="button" class="arcade-btn flex-1 py-3 bg-stone-300 text-black text-[10px] font-bold">MENU</button>
                             <template x-for="(reel, i) in reels" :key="'hold'+i">
                                 <button type="button" class="arcade-btn flex-1 py-3 text-[10px] font-bold"
-                                        :class="reel.held ? 'bg-green-600 text-white' : 'bg-stone-300 text-black'"
+                                        :class="reel.held ? 'bg-green-600 text-white' : (reel.used ? 'bg-stone-300 text-black opacity-40 cursor-not-allowed' : 'bg-stone-300 text-black')"
                                         @click="toggleHold(i)" :disabled="reel.held ? !canUnhold(i) : !canHold(i)">
                                     <span x-text="reel.held ? 'HELD' : 'HOLD'"></span>
                                 </button>
@@ -285,7 +285,7 @@
                             <p>Te weinig punten voor een spin. Kies HOLD bij een vrije rol en beantwoord een vraag om punten te verdienen.</p>
                             <button type="button" class="mt-2 rounded bg-orange-600 px-3 py-2 font-bold" @click="location.reload()">Nieuw spel</button>
                         </div>
-                        <p x-show="reels.every((reel) => reel.held) && !isWon" class="mt-2 text-center text-[10px] text-cyan-200">Klik op HELD om een rol vrij te maken voor je volgende spin.</p>
+                        <p x-show="reels.every((reel) => reel.held) && !isWon" class="mt-2 text-center text-[10px] text-cyan-200">Alle rollen vast! Druk op SPIN om ze allemaal opnieuw te laten draaien.</p>
                     </div>
 
                     <!-- QUESTION MODAL -->

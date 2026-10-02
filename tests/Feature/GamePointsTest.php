@@ -71,7 +71,6 @@ class GamePointsTest extends TestCase
     #[TestWith(['current_theme_question_id', 1])]
     #[TestWith(['led_krans_pending', true])]
     #[TestWith(['is_won', true])]
-    #[TestWith(['held_reels', [1, 2, 3]])]
     public function test_blocked_spin_returns_422_without_charging(string $attribute, mixed $value): void
     {
         $session = $this->startGameSession();
@@ -81,6 +80,30 @@ class GamePointsTest extends TestCase
 
         $this->assertDatabaseHas('game_sessions', ['id' => $session->id, 'current_score' => 100]);
         $this->assertDatabaseMissing('score_events', ['event_type' => 'spin_cost']);
+    }
+
+    public function test_reel_cannot_be_held_again_after_a_wrong_answer_until_the_next_spin(): void
+    {
+        $session = $this->startGameSession();
+        QuestionFactory::new()->count(2)->create();
+        $session->update(['current_reel_result' => [7, 2, 3]]);
+        $questionId = $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertOk()->json('question.id');
+        $this->postJson("/game/{$session->id}/answer", ['question_id' => $questionId, 'answer' => 'b'])
+            ->assertOk()->assertJsonPath('correct', false)->assertJsonPath('state.used_reels', [1]);
+
+        $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertUnprocessable();
+
+        $this->postJson("/game/{$session->id}/spin")->assertOk()->assertJsonPath('used_reels', []);
+    }
+
+    public function test_spin_with_all_reels_held_releases_them(): void
+    {
+        $session = $this->startGameSession();
+        $session->update(['held_reels' => [1, 2, 3], 'current_reel_result' => [7, 7, 7]]);
+
+        $this->postJson("/game/{$session->id}/spin")->assertOk()->assertJsonPath('held_reels', []);
+
+        $this->assertDatabaseHas('game_sessions', ['id' => $session->id, 'current_score' => 90]);
     }
 
     public function test_failed_spin_rolls_back_the_cost(): void

@@ -29,6 +29,7 @@ class GameSession extends Model
             'led_krans_pending' => 'boolean',
             'current_reel_result' => 'array',
             'held_reels' => 'array',
+            'used_reels' => 'array',
             'used_question_ids' => 'array',
             'used_theme_question_ids' => 'array',
         ];

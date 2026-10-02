@@ -90,12 +90,14 @@ export function questionMixin() {
             }
             this.message = data.correct ? `Goed antwoord! +${data.points_awarded} punten` : 'Helaas, geen punten erbij.';
 
-            setTimeout(() => this.closeQuestionAndFollowUp(data), data.correct ? 1200 : 2000);
+            setTimeout(() => this.closeQuestionAndFollowUp(data), 5000);
         },
 
         closeQuestionAndFollowUp(data) {
-            if (!this.isThemeQuestion && this.heldReelIndex !== null && data.correct) {
-                this.reels[this.heldReelIndex].held = true;
+            if (!this.isThemeQuestion && this.heldReelIndex !== null) {
+                // Right or wrong, this reel can't be held again until the next spin.
+                this.reels[this.heldReelIndex].used = true;
+                if (data.correct) this.reels[this.heldReelIndex].held = true;
             }
             this.heldReelIndex = null;
             this.hasQuestion = false;
