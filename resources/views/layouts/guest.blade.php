@@ -14,15 +14,13 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-            <div>
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-                </a>
-            </div>
-
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
+    <body class="font-sans text-gray-900 antialiased bg-[#09091c]">
+        <x-site-menu />
+        <div class="min-h-screen flex flex-col justify-center items-center gap-6 bg-[radial-gradient(circle_at_50%_20%,#302050_0%,#101027_50%,#09091c_100%)] px-4 pb-10 pt-24">
+            <a href="{{ route('home') }}" aria-label="SPINternational startpagina">
+                <img src="{{ asset('images/game/logo.png') }}" alt="SPINternational" class="w-48 drop-shadow-[0_0_20px_rgba(236,72,153,0.4)]">
+            </a>
+            <div class="w-full sm:max-w-md rounded-2xl border border-indigo-300/50 bg-white px-6 py-6 shadow-[0_22px_60px_rgba(0,0,0,0.5),0_0_24px_rgba(99,102,241,0.2)] sm:px-8">
                 {{ $slot }}
             </div>
         </div>

@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+[x-cloak] { display: none !important; }
+
 @layer utilities {
     .spin-font {
         font-family: 'Press Start 2P', 'Courier New', monospace;
@@ -118,4 +120,111 @@
 
 .reel-window.is-spinning .reel-item img {
     filter: blur(2px);
+}
+
+.game-cabinet {
+    transition: box-shadow 350ms ease;
+}
+
+.game-cabinet.game-spinning {
+    box-shadow: 0 0 18px #22d3ee70, 0 0 45px #a855f750;
+}
+
+.game-cabinet.game-celebrating {
+    box-shadow: 0 0 22px #86efac90, 0 0 55px #fde04750;
+}
+
+.reel-window.is-spinning::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 14px 18px #312e8160, inset 0 -14px 18px #312e8160;
+}
+
+.reel-window.reel-match {
+    border-color: #fde047;
+    box-shadow: 0 0 14px #fde04790;
+    animation: game-match-reveal 450ms ease-out;
+}
+
+.game-point-bursts {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.game-point-burst {
+    position: absolute;
+    top: 25%;
+    left: 50%;
+    font-size: 1.5rem;
+    font-weight: 900;
+    text-shadow: 0 2px 5px #000, 0 0 14px currentColor;
+    animation: game-points-rise 1400ms ease-out both;
+}
+
+.game-confetti-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.game-confetti-piece {
+    position: absolute;
+    top: -20px;
+    width: 7px;
+    height: 13px;
+    border-radius: 2px;
+    background: var(--color);
+    animation: game-confetti-fall 1900ms var(--delay) ease-in both;
+}
+
+.game-answer-feedback {
+    animation: game-answer-reveal 300ms ease-out;
+}
+
+@keyframes game-points-rise {
+    0% { opacity: 0; transform: translate(-50%, 10px) scale(0.85); }
+    20% { opacity: 1; transform: translate(-50%, -10px) scale(1.08); }
+    75% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -65px) scale(1); }
+}
+
+@keyframes game-confetti-fall {
+    0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg); }
+    10% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: translate3d(var(--drift), 100vh, 0) rotate(var(--turn)); }
+}
+
+@keyframes game-match-reveal {
+    0% { transform: scale(0.95); }
+    65% { transform: scale(1.035); }
+    100% { transform: scale(1); }
+}
+
+@keyframes game-answer-reveal {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .game-point-bursts,
+    .game-confetti-layer {
+        display: none;
+    }
+
+    .game-cabinet,
+    .game-cabinet *,
+    .game-cabinet *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .reel-window.is-spinning .reel-item img {
+        filter: none;
+    }
 }

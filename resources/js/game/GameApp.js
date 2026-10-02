@@ -5,6 +5,7 @@ import { reelsMixin } from './reels';
 import { themeMixin } from './theme';
 import { ledKransMixin } from './ledkrans';
 import { questionMixin } from './question';
+import { effectsMixin } from './effects';
 
 const MESSAGES = {
     gameplay: ['Give it a spin', 'Nice try', 'Keep on going', 'Well done', 'Congratulations'],
@@ -55,8 +56,17 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
         ...themeMixin(themes),
         ...ledKransMixin(ledKrans),
         ...questionMixin(),
+        ...effectsMixin(),
 
-        init() {},
+        init() {
+            this.initEffects();
+        },
+
+        destroy() {
+            this.destroyEffects();
+            clearInterval(this.ledTimer);
+            clearInterval(this.themeBlinkTimer);
+        },
 
         get scoreDigits() {
             return String(this.score).padStart(5, '0').split('').map(Number);
@@ -76,6 +86,7 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
             this.themes = state.themes;
             this.themeCredits = state.theme_credits;
             this.isWon = state.is_won;
+            this.showPointChange(this.scoreChange);
         },
 
         async startGame() {
@@ -114,6 +125,7 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
                 this.applyState(data.state);
                 this.lastPointsLabel = String(data.points);
                 this.message = `+${data.points} bonus!`;
+                this.celebrate('bonus');
                 this.resumeFollowUps();
                 return;
             }

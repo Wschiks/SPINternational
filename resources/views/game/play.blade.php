@@ -19,44 +19,17 @@
         ];
     @endphp
 
-        <!--MENU-->
-    <div class="absolute top-3 left-3 z-50" x-data="{ menuOpen: false }" @keydown.escape.window="menuOpen = false">
-        <button type="button"
-                @click="menuOpen = !menuOpen"
-                class="arcade-btn w-10 h-10 flex flex-col items-center justify-center gap-[3px] bg-[#1a1a3a] border-indigo-400"
-                :class="menuOpen ? 'ring-2 ring-fuchsia-500' : ''"
-                aria-label="Menu">
-            <span class="block w-5 h-[2px] bg-cyan-300 transition-transform" :class="menuOpen ? 'translate-y-[5px] rotate-45' : ''"></span>
-            <span class="block w-5 h-[2px] bg-cyan-300 transition-opacity" :class="menuOpen ? 'opacity-0' : 'opacity-100'"></span>
-            <span class="block w-5 h-[2px] bg-cyan-300 transition-transform" :class="menuOpen ? '-translate-y-[5px] -rotate-45' : ''"></span>
-        </button>
-
-        <div x-show="menuOpen" x-cloak x-transition.opacity
-             class="fixed inset-0 z-40 bg-black/60"
-             @click="menuOpen = false"></div>
-
-        <div x-show="menuOpen" x-cloak
-             x-transition:enter="transition ease-out duration-150"
-             x-transition:enter-start="opacity-0 -translate-x-2"
-             x-transition:enter-end="opacity-100 translate-x-0"
-             x-transition:leave="transition ease-in duration-100"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             class="absolute top-12 left-0 z-50 w-44 rounded-xl border-2 border-indigo-400 bg-gradient-to-b from-[#1a1a3a] to-[#0d0d1f] shadow-[0_0_15px_rgba(99,102,241,0.5)] p-2 flex flex-col gap-1.5">
-
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit"
-                        class="arcade-btn w-full px-3 py-2 rounded-lg bg-orange-600 text-white text-[10px] font-bold">
-                    UITLOGGEN
-                </button>
-            </form>
-        </div>
-    </div>
+    <x-site-menu />
     <div class="min-h-screen flex items-center justify-center py-6"
-         x-data='gameApp(@json($categories), @json($themes), @json($ledKrans), @json($assetPaths), { spinCost: @json($spinCost) })' x-init="init()">
+         x-data='gameApp(@json($categories), @json($themes), @json($ledKrans), @json($assetPaths), { spinCost: @json($spinCost) })'>
+        <div class="game-confetti-layer" aria-hidden="true">
+            <template x-for="piece in confetti" :key="piece.id">
+                <span class="game-confetti-piece" :style="piece.style"></span>
+            </template>
+        </div>
         <div class="max-w-md mx-auto px-3">
-            <div class="relative rounded-[2rem] bg-black text-white p-3 shadow-[0_0_25px_rgba(99,102,241,0.5)] spin-font">
+            <div class="game-cabinet relative rounded-[2rem] bg-black text-white p-3 shadow-[0_0_25px_rgba(99,102,241,0.5)] spin-font"
+                 :class="{ 'game-spinning': spinning, 'game-celebrating': celebration !== null }">
 
                 <!-- START SCREEN -->
                 <template x-if="!started">
@@ -170,7 +143,13 @@
                         </div>
 
                         <!-- SCORE readout: real 7-segment LED digits -->
-                        <div class="flex flex-col items-center gap-2 rounded-xl border border-cyan-400/50 bg-black p-3" role="status" aria-live="polite" aria-atomic="true">
+                        <div class="relative flex flex-col items-center gap-2 rounded-xl border border-cyan-400/50 bg-black p-3" role="status" aria-live="polite" aria-atomic="true">
+                            <div class="game-point-bursts" aria-hidden="true">
+                                <template x-for="burst in pointBursts" :key="burst.id">
+                                    <span class="game-point-burst" :class="burst.delta > 0 ? 'text-green-300' : 'text-orange-300'"
+                                          x-text="(burst.delta > 0 ? '+' : '') + burst.delta"></span>
+                                </template>
+                            </div>
                             <div class="text-xs font-bold tracking-widest text-cyan-200">JOUW PUNTEN</div>
                             <span class="sr-only" x-text="score + ' punten'"></span>
                             <div aria-hidden="true" class="flex px-3 py-2 rounded-lg bg-black border-2 border-slate-600 shadow-inner">
@@ -238,7 +217,7 @@
                             <div class="flex-1 flex justify-center gap-1.5">
                                 <template x-for="(reel, i) in reels" :key="'reelbox'+i">
                                     <div class="reel-window flex-1 aspect-square rounded-lg border-4 transition"
-                                         :class="reel.spinning ? 'border-cyan-400' : (reel.held ? 'border-green-400' : 'border-fuchsia-600')">
+                                         :class="[reel.spinning ? 'border-cyan-400 is-spinning' : (reel.held ? 'border-green-400' : 'border-fuchsia-600'), { 'reel-match': !spinning && hasReelResult && matchType !== 'none' && reels.filter(other => other.items[0] === reel.items[0]).length > 1 }]">
                                         <div class="reel-strip"
                                              :style="'transform:translateY(' + reel.offset + 'px); transition:' + (reel.transitionMs ? ('transform ' + reel.transitionMs + 'ms cubic-bezier(0.22,1.35,0.36,1)') : 'none') + ';'">
                                             <template x-for="(itemId, idx) in reel.items" :key="'item'+idx">
@@ -268,7 +247,7 @@
 
                         <!-- MENU / HOLD / SPIN -->
                         <div class="flex justify-center gap-1.5">
-                            <button type="button" class="arcade-btn flex-1 py-3 bg-stone-300 text-black text-[10px] font-bold">MENU</button>
+                            <button type="button" @click="$dispatch('toggle-site-menu')" class="arcade-btn flex-1 py-3 bg-stone-300 text-black text-[10px] font-bold">MENU</button>
                             <template x-for="(reel, i) in reels" :key="'hold'+i">
                                 <button type="button" class="arcade-btn flex-1 py-3 text-[10px] font-bold"
                                         :class="reel.held ? 'bg-green-600 text-white' : 'bg-stone-300 text-black'"
@@ -304,7 +283,7 @@
                             </div>
 
                             <template x-if="feedback">
-                                <div class="mb-3 p-2 rounded" :class="feedback.correct ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'">
+                                <div class="game-answer-feedback mb-3 p-2 rounded" :class="feedback.correct ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'">
                                     <div x-text="feedback.correct ? '✓ Correct!' : '✗ Helaas'"></div>
                                     <div class="mt-1 text-gray-200" x-text="feedback.text"></div>
                                     <div class="mt-2 text-sm font-bold" x-text="feedback.correct ? '+' + feedback.points + ' punten verdiend!' : 'Geen punten erbij.'"></div>

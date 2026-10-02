@@ -36,7 +36,7 @@ export function reelsMixin() {
                 this.message = error.message || 'Spinnen is niet gelukt. Probeer opnieuw.';
                 return;
             }
-            const durations = [1300, 1650, 2000]; // ms — staggered stop, reel 1 lands first
+            const durations = this.reducedMotion ? [0, 0, 0] : [1300, 1650, 2000];
 
             // Held reels stay put — no strip animation for those.
             this.reels.forEach((reel, i) => {
