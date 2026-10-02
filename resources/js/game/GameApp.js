@@ -94,7 +94,7 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
             return !this.hasQuestion && !this.spinning && !this.ledActive && !this.themeBlinkActive;
         },
         stopEnabled() {
-            return this.ledActive || this.themeBlinkActive;
+            return (this.ledActive && !this.ledFlash) || this.themeBlinkActive;
         },
 
         cycleLevel() {
@@ -107,13 +107,19 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
         // is blinking instead) confirms the currently-lit theme.
         async pressStop() {
             if (this.ledActive) {
+                if (this.ledFlash) return;
                 clearInterval(this.ledTimer);
-                this.ledActive = false;
                 const idx = this.ledIndex;
-                const data = await this.api('POST', `/game/${this.sessionId}/led-krans/stop`, { index: idx });
-                this.applyState(data.state);
-                this.lastPointsLabel = String(data.points);
-                this.message = `+${data.points} bonus!`;
+                const winShow = this.playLedWin(idx);
+                try {
+                    const data = await this.api('POST', `/game/${this.sessionId}/led-krans/stop`, { index: idx });
+                    this.applyState(data.state);
+                    this.lastPointsLabel = String(data.points);
+                    this.message = `+${data.points} bonus!`;
+                } finally {
+                    await winShow;
+                    this.ledActive = false;
+                }
                 this.resumeFollowUps();
                 return;
             }

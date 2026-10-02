@@ -190,34 +190,29 @@
                     </div>
 
                     <!-- BLOK 3: LED KRANS + MESSAGEBOARD -->
+                    <!-- One 9x3 grid. Tile indexes run clockwise: top 0-8, right 9, bottom 10-18 (shown right->left), left 19. -->
                     <div class="border-x-2 border-indigo-400 bg-[#141428] p-2">
-                        <div class="rounded-xl border-2 border-indigo-400/70 bg-[#1a1a3a] p-1.5">
-                            <div class="grid grid-cols-9 gap-1 mb-1">
+                        <div class="led-frame" :class="ledActive ? 'led-chasing' : ''">
+                            <div class="led-grid">
                                 <template x-for="i in [0,1,2,3,4,5,6,7,8]" :key="'ledtop'+i">
-                                    <div class="aspect-square rounded overflow-hidden transition"
-                                         :class="ledActive && ledIndex === i ? 'scale-110 ring-2 ring-white z-10 relative' : ''">
-                                        <img :src="ledIconUrl(i)" class="w-full h-full object-cover">
+                                    <div class="led-tile" :class="ledTileClass(i)">
+                                        <img :src="ledIconUrl(i)" class="led-tile-icon" alt="">
                                     </div>
                                 </template>
-                            </div>
-                            <div class="grid gap-1 items-stretch mb-1" style="grid-template-columns: 1fr 7fr 1fr;">
-                                <div class="aspect-square rounded overflow-hidden transition"
-                                     :class="ledActive && ledIndex === 9 ? 'scale-110 ring-2 ring-white z-10 relative' : ''">
-                                    <img :src="ledIconUrl(9)" class="w-full h-full object-cover">
+
+                                <div class="led-tile" :class="ledTileClass(19)">
+                                    <img :src="ledIconUrl(19)" class="led-tile-icon" alt="">
                                 </div>
-                                <div class="rounded flex items-center justify-center px-2 text-center bg-gradient-to-b from-indigo-500 to-indigo-700 border border-indigo-300/50">
-                                    <span x-text="message" class="text-[11px] sm:text-xs font-extrabold uppercase tracking-wide text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)]"></span>
+                                <div class="led-message" :class="message.length > 16 ? 'led-message--long' : ''">
+                                    <span x-text="message"></span>
                                 </div>
-                                <div class="aspect-square rounded overflow-hidden transition"
-                                     :class="ledActive && ledIndex === 10 ? 'scale-110 ring-2 ring-white z-10 relative' : ''">
-                                    <img :src="ledIconUrl(10)" class="w-full h-full object-cover">
+                                <div class="led-tile" :class="ledTileClass(9)">
+                                    <img :src="ledIconUrl(9)" class="led-tile-icon" alt="">
                                 </div>
-                            </div>
-                            <div class="grid grid-cols-9 gap-1">
-                                <template x-for="i in [11,12,13,14,15,16,17,18,19]" :key="'ledbot'+i">
-                                    <div class="aspect-square rounded overflow-hidden transition"
-                                         :class="ledActive && ledIndex === i ? 'scale-110 ring-2 ring-white z-10 relative' : ''">
-                                        <img :src="ledIconUrl(i)" class="w-full h-full object-cover">
+
+                                <template x-for="i in [18,17,16,15,14,13,12,11,10]" :key="'ledbot'+i">
+                                    <div class="led-tile" :class="ledTileClass(i)">
+                                        <img :src="ledIconUrl(i)" class="led-tile-icon" alt="">
                                     </div>
                                 </template>
                             </div>

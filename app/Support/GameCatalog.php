@@ -40,27 +40,30 @@ class GameCatalog
     ];
 
     /** 20 LED krans segments: emoji, points, color. */
+    // Clockwise ring order, starting top-left: top row left->right (0-8),
+    // right tile (9), bottom row right->left (10-18), left tile (19).
+    // Stepping the index by one therefore walks around the krans.
     public const LED_KRANS = [
-        ['emoji' => '🍀', 'points' => 20, 'color' => 'red'],
-        ['emoji' => '🍀', 'points' => 20, 'color' => 'red'],
-        ['emoji' => '🍀', 'points' => 20, 'color' => 'red'],
-        ['emoji' => '🍀', 'points' => 20, 'color' => 'red'],
+        ['emoji' => '🎉', 'points' => 100, 'color' => 'green'],
         ['emoji' => '🍀', 'points' => 20, 'color' => 'red'],
         ['emoji' => '👍🏼', 'points' => 30, 'color' => 'blue'],
-        ['emoji' => '👍🏼', 'points' => 30, 'color' => 'blue'],
-        ['emoji' => '👍🏼', 'points' => 30, 'color' => 'blue'],
-        ['emoji' => '👍🏼', 'points' => 30, 'color' => 'blue'],
-        ['emoji' => '🌈', 'points' => 40, 'color' => 'pink'],
-        ['emoji' => '🌈', 'points' => 40, 'color' => 'pink'],
-        ['emoji' => '🌈', 'points' => 40, 'color' => 'pink'],
-        ['emoji' => '🌈', 'points' => 40, 'color' => 'pink'],
-        ['emoji' => '🔥', 'points' => 50, 'color' => 'yellow'],
-        ['emoji' => '🔥', 'points' => 50, 'color' => 'yellow'],
-        ['emoji' => '🔥', 'points' => 50, 'color' => 'yellow'],
+        ['emoji' => '🍀', 'points' => 20, 'color' => 'red'],
         ['emoji' => '🔥', 'points' => 50, 'color' => 'yellow'],
         ['emoji' => '🎉', 'points' => 100, 'color' => 'green'],
+        ['emoji' => '🌈', 'points' => 40, 'color' => 'pink'],
+        ['emoji' => '👍🏼', 'points' => 30, 'color' => 'blue'],
+        ['emoji' => '🍀', 'points' => 20, 'color' => 'red'],
+        ['emoji' => '🔥', 'points' => 50, 'color' => 'yellow'],
+        ['emoji' => '🌈', 'points' => 40, 'color' => 'pink'],
+        ['emoji' => '🔥', 'points' => 50, 'color' => 'yellow'],
+        ['emoji' => '👍🏼', 'points' => 30, 'color' => 'blue'],
+        ['emoji' => '🍀', 'points' => 20, 'color' => 'red'],
+        ['emoji' => '🌈', 'points' => 40, 'color' => 'pink'],
         ['emoji' => '🎉', 'points' => 100, 'color' => 'green'],
-        ['emoji' => '🎉', 'points' => 100, 'color' => 'green'],
+        ['emoji' => '👍🏼', 'points' => 30, 'color' => 'blue'],
+        ['emoji' => '🍀', 'points' => 20, 'color' => 'red'],
+        ['emoji' => '🔥', 'points' => 50, 'color' => 'yellow'],
+        ['emoji' => '🌈', 'points' => 40, 'color' => 'pink'],
     ];
 
     public const BADGEBOARD_COLS = [1, 2, 4, 5];
