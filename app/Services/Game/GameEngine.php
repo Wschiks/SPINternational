@@ -17,7 +17,7 @@ use RuntimeException;
  * @see ReelService        spin / hold / unhold
  * @see QuestionService    picking + tracking used questions
  * @see BadgeboardService  icon activation, vertical/horizontal bonuses
- * @see ThemeService       theme selection, theme questions, win condition
+ * @see ThemeService       row-earned theme questions, win condition
  * @see ScoreService       every point change + its audit trail
  */
 class GameEngine
@@ -40,6 +40,7 @@ class GameEngine
             'used_question_ids' => [],
             'used_theme_question_ids' => [],
             'held_reels' => [],
+            'used_reels' => [],
             'current_score' => 0,
         ]);
 
@@ -74,10 +75,6 @@ class GameEngine
 
         if ($session->led_krans_pending) {
             throw new RuntimeException('Pak eerst je bonus met STOP.');
-        }
-
-        if (count($session->held_reels ?? []) === 3) {
-            throw new RuntimeException('Maak eerst een rol vrij om te spinnen.');
         }
 
         if ($session->current_score < GameCatalog::SPIN_COST) {
@@ -143,7 +140,10 @@ class GameEngine
 
             $result['badgeboard_update'] = $this->badgeboard->activateIcon($session, $question->category_id);
             $result['vertical_bonus'] = $this->badgeboard->checkVerticalBonus($session, $question->category_id);
-            $result['horizontal_bonus'] = $this->badgeboard->checkHorizontalBonus($session, $question->category_id);
+            $completedRow = $this->badgeboard->checkHorizontalBonus($session, $question->category_id);
+            if ($completedRow) {
+                $result['horizontal_bonus'] = $this->themes->startRowTheme($session, $completedRow['row']);
+            }
 
             $session->update(['led_krans_pending' => true]);
             $result['trigger_led_krans'] = true;
@@ -152,6 +152,9 @@ class GameEngine
             // keep showing this symbol on future spins until unheld.
             $this->reels->lockCurrentReel($session);
         }
+
+        // Right or wrong, this reel can't be held again until the next spin.
+        $this->reels->markCurrentReelUsed($session);
 
         $session->update([
             'current_category_id' => null,
@@ -228,13 +231,6 @@ class GameEngine
         ];
     }
 
-    public function selectTheme(GameSession $session, int $themeId): array
-    {
-        $this->assertActive($session);
-
-        return $this->themes->select($session, $themeId);
-    }
-
     public function themeAnswer(GameSession $session, int $questionId, mixed $userAnswer): array
     {
         $this->assertActive($session);
@@ -261,12 +257,12 @@ class GameEngine
             'reels' => $session->current_reel_result,
             'match_type' => $session->current_match_type,
             'held_reels' => $session->held_reels ?? [],
+            'used_reels' => $session->used_reels ?? [],
             'current_category_id' => $session->current_category_id,
             'current_question_id' => $session->current_question_id,
             'current_theme_id' => $session->current_theme_id,
             'current_theme_question_id' => $session->current_theme_question_id,
             'led_krans_pending' => $session->led_krans_pending,
-            'theme_credits' => $session->theme_credits,
             'badgeboard' => [
                 'icon_states' => $board->icon_states,
                 'verticals' => [

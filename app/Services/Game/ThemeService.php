@@ -5,37 +5,45 @@ namespace App\Services\Game;
 use App\Models\GameSession;
 use App\Models\Leaderboard;
 use App\Models\ThemeQuestion;
+use App\Support\GameCatalog;
 use RuntimeException;
 
-/** Erasmus+ theme selection, theme questions, and the win condition. */
+/** Erasmus+ theme questions (earned by completing a badgeboard row) and the win condition. */
 class ThemeService
 {
     public function __construct(
         private QuestionService $questions,
         private ScoreService $score,
+        private BadgeboardService $badgeboard,
     ) {}
 
-    public function select(GameSession $session, int $themeId): array
+    /**
+     * A completed badgeboard row spins its middle question mark onto one of
+     * the 4 crown themes. Picks that theme (only themes that still have an
+     * open checkbox) and its question; returns null when none are left.
+     */
+    public function startRowTheme(GameSession $session, int $row): ?array
     {
-        $activeCol = $session->themeActiveColumn($themeId);
-        $checksCol = $session->themeChecksColumn($themeId);
-        $isActive = (bool) $session->{$activeCol};
+        $candidates = array_values(array_filter(
+            array_keys(GameCatalog::THEMES),
+            fn (int $id): bool => $session->{$session->themeChecksColumn($id)} < 3,
+        ));
 
-        if (! $isActive) {
-            if ($session->theme_credits < 1) {
-                throw new RuntimeException('No theme selection available right now.');
-            }
-            $session->update([$activeCol => true, 'theme_credits' => $session->theme_credits - 1]);
+        if (! $candidates) {
+            $this->badgeboard->resetCompletedRows($session);
+
+            return null;
         }
 
-        $slot = $session->{$checksCol} + 1; // next open checkbox (1..3)
+        $themeId = $candidates[array_rand($candidates)];
         $question = $this->questions->pickThemeQuestion($themeId, $session->level_selected, $session->used_theme_question_ids ?? []);
 
         $session->update(['current_theme_id' => $themeId, 'current_theme_question_id' => $question->id]);
 
         return [
+            'row' => $row,
             'theme_id' => $themeId,
-            'slot' => $slot,
+            'slot' => $session->{$session->themeChecksColumn($themeId)} + 1, // next open checkbox (1..3)
             'question' => $question->toPublicArray(),
             'points' => $this->pointsForLevel($session->level_selected),
         ];
@@ -76,7 +84,7 @@ class ThemeService
 
             $checksCol = $session->themeChecksColumn($themeId);
             $newChecks = min(3, $session->{$checksCol} + 1);
-            $session->update([$checksCol => $newChecks]);
+            $session->update([$checksCol => $newChecks, $session->themeActiveColumn($themeId) => true]);
 
             if ($newChecks >= 3) {
                 $this->score->award($session, 100, 'theme_completion_bonus', null);
@@ -89,6 +97,9 @@ class ThemeService
         }
 
         $session->update(['current_theme_id' => null, 'current_theme_question_id' => null]);
+
+        // Right or wrong, the row that earned this question goes back to black and white.
+        $this->badgeboard->resetCompletedRows($session);
 
         $win = $this->checkWin($session->refresh());
         $result['game_won'] = $win['game_won'];
