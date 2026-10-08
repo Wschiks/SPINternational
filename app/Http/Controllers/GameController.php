@@ -135,18 +135,6 @@ class GameController extends Controller
         });
     }
 
-    public function themeSelect(Request $request, GameSession $session)
-    {
-        $this->authorizeSession($session);
-        $data = $request->validate(['theme_id' => 'required|integer|min:1|max:4']);
-
-        return $this->handle($session, function (GameSession $session) use ($data): array {
-            $result = $this->engine->selectTheme($session, $data['theme_id']);
-
-            return array_merge($result, ['state' => $this->engine->state($session)]);
-        });
-    }
-
     public function themeAnswer(Request $request, GameSession $session)
     {
         $this->authorizeSession($session);

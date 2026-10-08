@@ -89,10 +89,10 @@
                     <!-- BLOK 6: KROON -->
                     <div class="relative rounded-t-2xl border-2 border-b-0 border-indigo-400 bg-gradient-to-b from-[#1a1a3a] to-[#141428] px-2 pt-3 pb-2 grid gap-x-1" style="grid-template-columns: 1fr 1.7fr 1fr;">
                         <div class="flex flex-col items-center justify-start">
-                            <button type="button" class="w-14 h-14 sm:w-16 sm:h-16" @click="onThemeIconClick(1)">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16">
                                 <img :src="themeIconUrl(1)" class="w-full h-full object-contain transition" :class="themeImgClasses(1)" :style="themeImgStyle(1)">
-                            </button>
-                            <div class="flex gap-1 mt-1" x-show="themes[1].active">
+                            </div>
+                            <div class="flex gap-1 mt-1">
                                 <template x-for="i in [1,2,3]" :key="'c1'+i">
                                     <img :src="checkboxUrl(1,i)" class="w-3 h-3">
                                 </template>
@@ -104,10 +104,10 @@
                         </div>
 
                         <div class="flex flex-col items-center justify-start">
-                            <button type="button" class="w-14 h-14 sm:w-16 sm:h-16" @click="onThemeIconClick(3)">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16">
                                 <img :src="themeIconUrl(3)" class="w-full h-full object-contain transition" :class="themeImgClasses(3)" :style="themeImgStyle(3)">
-                            </button>
-                            <div class="flex gap-1 mt-1" x-show="themes[3].active">
+                            </div>
+                            <div class="flex gap-1 mt-1">
                                 <template x-for="i in [1,2,3]" :key="'c3'+i">
                                     <img :src="checkboxUrl(3,i)" class="w-3 h-3">
                                 </template>
@@ -115,10 +115,10 @@
                         </div>
 
                         <div class="flex flex-col items-center justify-start mt-2">
-                            <button type="button" class="w-14 h-14 sm:w-16 sm:h-16" @click="onThemeIconClick(2)">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16">
                                 <img :src="themeIconUrl(2)" class="w-full h-full object-contain transition" :class="themeImgClasses(2)" :style="themeImgStyle(2)">
-                            </button>
-                            <div class="flex gap-1 mt-1" x-show="themes[2].active">
+                            </div>
+                            <div class="flex gap-1 mt-1">
                                 <template x-for="i in [1,2,3]" :key="'c2'+i">
                                     <img :src="checkboxUrl(2,i)" class="w-3 h-3">
                                 </template>
@@ -126,10 +126,10 @@
                         </div>
                         <div></div>
                         <div class="flex flex-col items-center justify-start mt-2">
-                            <button type="button" class="w-14 h-14 sm:w-16 sm:h-16" @click="onThemeIconClick(4)">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16">
                                 <img :src="themeIconUrl(4)" class="w-full h-full object-contain transition" :class="themeImgClasses(4)" :style="themeImgStyle(4)">
-                            </button>
-                            <div class="flex gap-1 mt-1" x-show="themes[4].active">
+                            </div>
+                            <div class="flex gap-1 mt-1">
                                 <template x-for="i in [1,2,3]" :key="'c4'+i">
                                     <img :src="checkboxUrl(4,i)" class="w-3 h-3">
                                 </template>
@@ -151,7 +151,7 @@
                                         <template x-for="col in [1,2,3,4,5]" :key="'cell'+row+'-'+col">
                                             <div class="aspect-square rounded flex items-center justify-center p-1 bg-black/20 border border-black/40">
                                                 <template x-if="col === 3">
-                                                    <img :src="badgeMiddleUrl(row)" class="w-full h-full object-contain">
+                                                    <img :src="badgeMiddleUrl(row)" class="w-full h-full object-contain" :class="themeSpinRow === row ? 'pulse-glow' : ''">
                                                 </template>
                                                 <template x-if="col !== 3">
                                                     <img :src="categoryIconUrl(categoryAt(row,col))" class="w-full h-full object-contain transition"
@@ -266,7 +266,7 @@
                             <button type="button" class="arcade-btn flex-1 py-3 bg-stone-300 text-black text-[10px] font-bold">MENU</button>
                             <template x-for="(reel, i) in reels" :key="'hold'+i">
                                 <button type="button" class="arcade-btn flex-1 py-3 text-[10px] font-bold"
-                                        :class="reel.held ? 'bg-green-600 text-white' : 'bg-stone-300 text-black'"
+                                        :class="reel.held ? 'bg-green-600 text-white' : (reel.used ? 'bg-stone-300 text-black opacity-40 cursor-not-allowed' : 'bg-stone-300 text-black')"
                                         @click="toggleHold(i)" :disabled="reel.held ? !canUnhold(i) : !canHold(i)">
                                     <span x-text="reel.held ? 'HELD' : 'HOLD'"></span>
                                 </button>
@@ -280,7 +280,7 @@
                             <p>Te weinig punten voor een spin. Kies HOLD bij een vrije rol en beantwoord een vraag om punten te verdienen.</p>
                             <button type="button" class="mt-2 rounded bg-orange-600 px-3 py-2 font-bold" @click="location.reload()">Nieuw spel</button>
                         </div>
-                        <p x-show="reels.every((reel) => reel.held) && !isWon" class="mt-2 text-center text-[10px] text-cyan-200">Klik op HELD om een rol vrij te maken voor je volgende spin.</p>
+                        <p x-show="reels.every((reel) => reel.held) && !isWon" class="mt-2 text-center text-[10px] text-cyan-200">Alle rollen vast! Druk op SPIN om ze allemaal opnieuw te laten draaien.</p>
                     </div>
 
                     <!-- QUESTION MODAL -->

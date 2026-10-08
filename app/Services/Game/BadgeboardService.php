@@ -84,20 +84,34 @@ class BadgeboardService
             return null;
         }
 
+        // Marks the row as waiting for its theme question; it is cleared
+        // again (and the row switched off) by resetCompletedRows().
         $board->update([$claimedField => true]);
-        $session->update(['theme_credits' => $session->theme_credits + 1]);
 
-        $availableThemes = [];
-        foreach (GameCatalog::THEMES as $id => $theme) {
-            $activeCol = $session->themeActiveColumn($id);
-            $availableThemes[] = [
-                'id' => $id,
-                'name' => $theme['name'],
-                'emoji' => $theme['emoji'],
-                'already_active' => (bool) $session->{$activeCol},
-            ];
+        return ['row' => $row];
+    }
+
+    /** Switches every completed row back off so it can be collected again. */
+    public function resetCompletedRows(GameSession $session): void
+    {
+        $board = $session->badgeboardState;
+        $grid = $board->icon_states;
+        $changes = [];
+
+        for ($row = 1; $row <= 4; $row++) {
+            $field = "horizontal_row{$row}_complete";
+            if (! $board->{$field}) {
+                continue;
+            }
+
+            foreach (GameCatalog::BADGEBOARD_COLS as $col) {
+                $grid[$row][$col] = 0;
+            }
+            $changes[$field] = false;
         }
 
-        return ['row' => $row, 'available_themes' => $availableThemes];
+        if ($changes) {
+            $board->update($changes + ['icon_states' => $grid]);
+        }
     }
 }

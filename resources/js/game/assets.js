@@ -6,9 +6,10 @@ export function assetsMixin(paths) {
             return id ? `${paths.badgeboard}/${id}.png` : `${paths.badgeboard}/qmark.png`;
         },
 
+        // The question mark spins through the theme icons once its row is complete.
         badgeMiddleUrl(row) {
-            if (!this.badge.horizontals?.[row]) return `${paths.badgeboard}/qmark.png`;
-            return `${paths.badgeboard}/medal.png`;
+            if (this.themeSpinRow === row && this.themeSpinId) return paths.themes[this.themeSpinId];
+            return `${paths.badgeboard}/qmark.png`;
         },
 
         themeIconUrl(id) {

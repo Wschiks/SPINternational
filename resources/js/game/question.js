@@ -90,13 +90,16 @@ export function questionMixin() {
             }
             this.message = data.correct ? `Goed antwoord! +${data.points_awarded} punten` : 'Helaas, geen punten erbij.';
 
-            setTimeout(() => this.closeQuestionAndFollowUp(data), data.correct ? 1200 : 2000);
+            setTimeout(() => this.closeQuestionAndFollowUp(data), 5000);
         },
 
         closeQuestionAndFollowUp(data) {
-            if (!this.isThemeQuestion && this.heldReelIndex !== null && data.correct) {
-                this.reels[this.heldReelIndex].held = true;
+            if (!this.isThemeQuestion && this.heldReelIndex !== null) {
+                // Right or wrong, this reel can't be held again until the next spin.
+                this.reels[this.heldReelIndex].used = true;
+                if (data.correct) this.reels[this.heldReelIndex].held = true;
             }
+            if (this.isThemeQuestion) this.endThemeRound();
             this.heldReelIndex = null;
             this.hasQuestion = false;
             this.question = null;
@@ -106,9 +109,9 @@ export function questionMixin() {
 
             const followUps = [];
             if (data.trigger_led_krans) followUps.push((done) => this.runLedKrans(done));
-            if (data.horizontal_bonus?.available_themes) {
-                const opts = data.horizontal_bonus.available_themes;
-                followUps.push((done) => this.runThemeBlink(opts, done));
+            if (data.horizontal_bonus?.question) {
+                const bonus = data.horizontal_bonus;
+                followUps.push((done) => this.runThemeSpin(bonus, done));
             }
             if (data.vertical_bonus) this.say('badge');
             if (data.theme_complete) this.say('theme');

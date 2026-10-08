@@ -17,6 +17,11 @@ class ReelService
         $held = $session->held_reels ?? [];
         $previous = $session->current_reel_result ?? [null, null, null];
 
+        // All 3 reels held: release them so this spin re-rolls every reel.
+        if (count($held) === 3) {
+            $held = [];
+        }
+
         // Held reels keep their symbol; only the unheld reels re-roll.
         $reels = [];
         for ($i = 1; $i <= 3; $i++) {
@@ -30,6 +35,8 @@ class ReelService
 
         $session->update([
             'current_reel_result' => $reels,
+            'held_reels' => $held,
+            'used_reels' => [],
             'current_match_type' => $matchType,
             'current_category_id' => null,
             'current_question_id' => null,
@@ -59,6 +66,9 @@ class ReelService
         }
         if (in_array($reelNumber, $session->held_reels ?? [], true)) {
             throw new RuntimeException('That reel is already held.');
+        }
+        if (in_array($reelNumber, $session->used_reels ?? [], true)) {
+            throw new RuntimeException('Deze rol heb je deze spin al gebruikt.');
         }
 
         $categoryId = $reels[$reelNumber - 1];
@@ -91,6 +101,18 @@ class ReelService
         $held = $session->held_reels ?? [];
         $held[] = $session->current_reel_index;
         $session->update(['held_reels' => array_values(array_unique($held))]);
+    }
+
+    /** Marks the current reel as answered, so it can't be held again this spin. */
+    public function markCurrentReelUsed(GameSession $session): void
+    {
+        if (! $session->current_reel_index) {
+            return;
+        }
+
+        $used = $session->used_reels ?? [];
+        $used[] = $session->current_reel_index;
+        $session->update(['used_reels' => array_values(array_unique($used))]);
     }
 
     public function pointsForMatch(int $matchCount, int $level): int
