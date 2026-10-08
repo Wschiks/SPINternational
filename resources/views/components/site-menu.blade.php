@@ -52,6 +52,14 @@
                 <a href="{{ route('register') }}" @click="menuOpen = false"
                    class="rounded-lg px-4 py-3 text-sm font-semibold text-slate-100 transition hover:bg-white/10 hover:text-cyan-200 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-300">Account aanmaken</a>
             @endauth
+            @env('local')
+                <button type="button"
+                        x-data="{ on: localStorage.getItem('devShowAnswers') === '1' }"
+                        @click="on = !on; localStorage.setItem('devShowAnswers', on ? '1' : '0'); $dispatch('dev-show-answers', on)"
+                        class="rounded-lg border border-dashed border-yellow-400/60 px-4 py-3 text-left text-sm font-semibold text-yellow-200 transition hover:bg-yellow-400/10">
+                    ⭐ DEV <span x-text="on ? 'AAN' : 'UIT'" :class="on ? 'text-green-300' : 'text-red-400'"></span>
+                </button>
+            @endenv
         </div>
 
         @auth

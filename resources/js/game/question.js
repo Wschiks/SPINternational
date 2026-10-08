@@ -23,6 +23,46 @@ export function questionMixin() {
             this.draft = ['mc_2goed', 'mc_3goed', 'volgorde', 'matching', 'sleep'].includes(q.type) ? [] : null;
         },
 
+        devShowAnswers: localStorage.getItem('devShowAnswers') === '1',
+
+        devAnswer() {
+            return this.devShowAnswers ? (this.question?.dev_answer ?? null) : null;
+        },
+
+        devMark(key, side) {
+            const a = this.devAnswer();
+            if (a === null) return '';
+            const k = String(key).toLowerCase();
+            const type = this.question.type;
+            if (type === 'volgorde') {
+                const i = a.map((x) => String(x).toLowerCase()).indexOf(k);
+                return i === -1 ? '' : ` ⭐ ${i + 1}`;
+            }
+            if (['matching', 'sleep'].includes(type)) {
+                const pair = a.find((p) => String(p[side]).toLowerCase() === k);
+                if (!pair) return '';
+                return side === 'from' ? ` ⭐ → ${pair.to}` : ` ⭐ ${pair.to}`;
+            }
+            const list = (Array.isArray(a) ? a : [a]).map((x) => String(x).toLowerCase());
+            return list.includes(k) ? ' ⭐' : '';
+        },
+
+        devHint() {
+            const a = this.devAnswer();
+            const type = this.question?.type;
+            if (!this.devShowAnswers || !type) return '';
+            if (type === 'schatting' && a) return a.min === a.max ? `${a.min}` : `${a.min} t/m ${a.max}`;
+            if (type === 'invulzin' && a) return a.join(' / ');
+            if (type === 'hotspot') return 'klik in het gele vlak';
+            return '';
+        },
+
+        devHotspotPolygon() {
+            const poly = this.question?.hotspots?.[0];
+            if (!this.devShowAnswers || !poly) return '';
+            return 'polygon(' + poly.map((p) => `${p.x}% ${p.y}%`).join(', ') + ')';
+        },
+
         optionText(key) {
             const opt = (this.question?.options || []).find((o) => o.key === key);
             return opt ? opt.text : key;

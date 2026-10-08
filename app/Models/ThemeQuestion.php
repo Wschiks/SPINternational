@@ -32,6 +32,7 @@ class ThemeQuestion extends Model
             'difficulty' => $this->difficulty,
             'options' => $this->answer_options,
             'hotspots' => $this->hotspot_coords,
+            'dev_answer' => app()->environment('local') ? $this->correct_answer : null,
         ];
     }
 }

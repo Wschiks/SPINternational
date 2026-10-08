@@ -21,7 +21,8 @@
 
     <x-site-menu />
     <div class="min-h-screen flex items-center justify-center py-6"
-         x-data='gameApp(@json($categories), @json($themes), @json($ledKrans), @json($assetPaths), { spinCost: @json($spinCost) })'>
+         x-data='gameApp(@json($categories), @json($themes), @json($ledKrans), @json($assetPaths), { spinCost: @json($spinCost) })'
+         @dev-show-answers.window="devShowAnswers = $event.detail">
         <div class="game-confetti-layer" aria-hidden="true">
             <template x-for="piece in confetti" :key="piece.id">
                 <span class="game-confetti-piece" :style="piece.style"></span>
@@ -287,13 +288,15 @@
 
                             <template x-if="!feedback">
                             <div>
+                                {{-- DEV-CHEAT (tijdelijk, weghalen) --}}
+                                <div x-show="devHint()" class="mb-2 rounded border border-dashed border-yellow-400/60 px-2 py-1 text-yellow-300">⭐ DEV: <span x-text="devHint()"></span></div>
                                 <template x-if="['mc_1goed','waar_niet','foto','blitz','zoom'].includes(question?.type)">
                                     <div class="flex flex-col gap-2">
                                         <template x-for="opt in question.options" :key="opt.key">
                                             <button type="button" class="px-3 py-2 rounded border text-left"
                                                     :class="draft === opt.key ? 'bg-gray-500 border-gray-400' : 'border-gray-600 hover:border-cyan-400'"
                                                     @click="draft = opt.key; submit()">
-                                                <span x-text="opt.text"></span>
+                                                <span x-text="opt.text"></span><span class="text-yellow-300" x-text="devMark(opt.key)"></span>
                                             </button>
                                         </template>
                                     </div>
@@ -305,7 +308,7 @@
                                             <button type="button" class="px-3 py-2 rounded border text-left"
                                                     :class="(draft||[]).includes(opt.key) ? 'bg-gray-500 border-gray-400' : 'border-gray-600 hover:border-cyan-400'"
                                                     @click="toggleMulti(opt.key)">
-                                                <span x-text="opt.text"></span>
+                                                <span x-text="opt.text"></span><span class="text-yellow-300" x-text="devMark(opt.key)"></span>
                                             </button>
                                         </template>
                                         <button type="button" class="mt-1 px-3 py-2 rounded bg-fuchsia-600" @click="submit()">Bevestig</button>
@@ -325,7 +328,7 @@
                                                         :class="(draft||[]).includes(opt.key) ? 'opacity-30 border-gray-700' : 'border-gray-600 hover:border-cyan-400'"
                                                         :disabled="(draft||[]).includes(opt.key)"
                                                         @click="addToOrder(opt.key)">
-                                                    <span x-text="opt.text"></span>
+                                                    <span x-text="opt.text"></span><span class="text-yellow-300" x-text="devMark(opt.key)"></span>
                                                 </button>
                                             </template>
                                         </div>
@@ -342,7 +345,7 @@
                                                     <button type="button" class="px-2 py-1 rounded border text-left text-[10px]"
                                                             :class="pairClass('from', opt.key)"
                                                             @click="pickPair('from', opt.key)">
-                                                        <span x-text="opt.text"></span>
+                                                        <span x-text="opt.text"></span><span class="text-yellow-300" x-text="devMark(opt.key, 'from')"></span>
                                                     </button>
                                                 </template>
                                             </div>
@@ -351,7 +354,7 @@
                                                     <button type="button" class="px-2 py-1 rounded border text-left text-[10px]"
                                                             :class="pairClass('to', opt.key)"
                                                             @click="pickPair('to', opt.key)">
-                                                        <span x-text="opt.text"></span>
+                                                        <span x-text="opt.text"></span><span class="text-yellow-300" x-text="devMark(opt.key, 'to')"></span>
                                                     </button>
                                                 </template>
                                             </div>
@@ -380,6 +383,7 @@
                                     <div class="relative h-40 bg-gray-800 border border-gray-600 rounded cursor-crosshair"
                                          @click="clickHotspot($event)">
                                         <div class="absolute inset-0 flex items-center justify-center text-[9px] text-gray-500">klik in de afbeelding</div>
+                                        <div x-show="devHotspotPolygon()" class="absolute inset-0 bg-yellow-300/50 pointer-events-none" :style="'clip-path:' + devHotspotPolygon()"></div>
                                     </div>
                                 </template>
                             </div>
