@@ -36,7 +36,7 @@ export function reelsMixin() {
                 this.message = error.message || 'Spinnen is niet gelukt. Probeer opnieuw.';
                 return;
             }
-            const durations = [1300, 1650, 2000]; // ms — staggered stop, reel 1 lands first
+            const durations = this.reducedMotion ? [0, 0, 0] : [1300, 1650, 2000];
 
             // All 3 reels held: the server released them, so all of them spin.
             if (this.reels.every((reel) => reel.held)) {

@@ -1,29 +1,25 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <h1 class="text-2xl font-black uppercase tracking-[0.15em] text-white sm:text-3xl">
             {{ __('Profile') }}
-        </h2>
+        </h1>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
+    <div class="px-4 py-10 sm:px-6 lg:px-8">
+        <div class="mx-auto grid max-w-7xl gap-6 lg:grid-cols-3">
+            <div class="space-y-6 lg:col-span-2">
+                <x-arcade-panel>
                     @include('profile.partials.update-profile-information-form')
-                </div>
-            </div>
+                </x-arcade-panel>
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
+                <x-arcade-panel>
                     @include('profile.partials.update-password-form')
-                </div>
+                </x-arcade-panel>
             </div>
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.delete-user-form')
-                </div>
-            </div>
+            <x-arcade-panel tone="danger" class="h-fit lg:sticky lg:top-24">
+                @include('profile.partials.delete-user-form')
+            </x-arcade-panel>
         </div>
     </div>
 </x-app-layout>

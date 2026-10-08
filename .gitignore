@@ -5,9 +5,13 @@
 .env.production
 .phpactor.json
 .phpunit.result.cache
+/.agents/
+/.claude/
 /.codex
 /.cursor/
 /.idea
+/.kiro/
+/.mcp.json
 /.nova
 /.phpunit.cache
 /.vscode

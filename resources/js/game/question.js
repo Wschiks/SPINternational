@@ -87,6 +87,7 @@ export function questionMixin() {
 
             if (data.correct) {
                 this.lastPointsLabel = String(data.points_awarded);
+                this.celebrate(data.game_won ? 'win' : 'correct');
             }
             this.message = data.correct ? `Goed antwoord! +${data.points_awarded} punten` : 'Helaas, geen punten erbij.';
 

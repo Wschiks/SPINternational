@@ -4,6 +4,7 @@ import { reelsMixin } from '../../resources/js/game/reels.js';
 import { questionMixin } from '../../resources/js/game/question.js';
 import { themeMixin } from '../../resources/js/game/theme.js';
 import { assetsMixin } from '../../resources/js/game/assets.js';
+import { effectsMixin } from '../../resources/js/game/effects.js';
 
 function playableReels() {
     return { ...reelsMixin(), started: true, score: 100, spinCost: 10, sessionId: 1 };
@@ -82,7 +83,7 @@ test('a failed spin resets the button without changing the displayed balance', a
 
 test('a question shows its reward and correct-answer feedback includes the awarded points', async (context) => {
     context.mock.method(globalThis, 'setTimeout', () => 0);
-    const game = { ...questionMixin(), sessionId: 1, score: 90 };
+    const game = { ...questionMixin(), ...effectsMixin(), sessionId: 1, score: 90 };
     game.openQuestion({ id: 7, type: 'mc_1goed' }, false, null, 40);
     assert.equal(game.questionPoints, 40);
     game.draft = 'a';
@@ -94,11 +95,12 @@ test('a question shows its reward and correct-answer feedback includes the award
     assert.equal(game.score, 130);
     assert.equal(game.feedback.points, 40);
     assert.equal(game.message, 'Goed antwoord! +40 punten');
+    assert.equal(game.celebration, 'correct');
 });
 
 test('an answer cannot be sent twice while the first request is pending', async (context) => {
     context.mock.method(globalThis, 'setTimeout', () => 0);
-    const game = { ...questionMixin(), sessionId: 1 };
+    const game = { ...questionMixin(), ...effectsMixin(), sessionId: 1 };
     game.openQuestion({ id: 7, type: 'mc_1goed' }, false, null, 10);
     game.draft = 'a';
     let finishAnswer;
