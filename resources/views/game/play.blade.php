@@ -89,10 +89,10 @@
                     <!-- BLOK 6: KROON -->
                     <div class="relative rounded-t-2xl border-2 border-b-0 border-indigo-400 bg-gradient-to-b from-[#1a1a3a] to-[#141428] px-2 pt-3 pb-2 grid gap-x-1" style="grid-template-columns: 1fr 1.7fr 1fr;">
                         <div class="flex flex-col items-center justify-start">
-                            <button type="button" class="w-14 h-14 sm:w-16 sm:h-16" @click="onThemeIconClick(1)">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16">
                                 <img :src="themeIconUrl(1)" class="w-full h-full object-contain transition" :class="themeImgClasses(1)" :style="themeImgStyle(1)">
-                            </button>
-                            <div class="flex gap-1 mt-1" x-show="themes[1].active">
+                            </div>
+                            <div class="flex gap-1 mt-1">
                                 <template x-for="i in [1,2,3]" :key="'c1'+i">
                                     <img :src="checkboxUrl(1,i)" class="w-3 h-3">
                                 </template>
@@ -104,10 +104,10 @@
                         </div>
 
                         <div class="flex flex-col items-center justify-start">
-                            <button type="button" class="w-14 h-14 sm:w-16 sm:h-16" @click="onThemeIconClick(3)">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16">
                                 <img :src="themeIconUrl(3)" class="w-full h-full object-contain transition" :class="themeImgClasses(3)" :style="themeImgStyle(3)">
-                            </button>
-                            <div class="flex gap-1 mt-1" x-show="themes[3].active">
+                            </div>
+                            <div class="flex gap-1 mt-1">
                                 <template x-for="i in [1,2,3]" :key="'c3'+i">
                                     <img :src="checkboxUrl(3,i)" class="w-3 h-3">
                                 </template>
@@ -115,10 +115,10 @@
                         </div>
 
                         <div class="flex flex-col items-center justify-start mt-2">
-                            <button type="button" class="w-14 h-14 sm:w-16 sm:h-16" @click="onThemeIconClick(2)">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16">
                                 <img :src="themeIconUrl(2)" class="w-full h-full object-contain transition" :class="themeImgClasses(2)" :style="themeImgStyle(2)">
-                            </button>
-                            <div class="flex gap-1 mt-1" x-show="themes[2].active">
+                            </div>
+                            <div class="flex gap-1 mt-1">
                                 <template x-for="i in [1,2,3]" :key="'c2'+i">
                                     <img :src="checkboxUrl(2,i)" class="w-3 h-3">
                                 </template>
@@ -126,10 +126,10 @@
                         </div>
                         <div></div>
                         <div class="flex flex-col items-center justify-start mt-2">
-                            <button type="button" class="w-14 h-14 sm:w-16 sm:h-16" @click="onThemeIconClick(4)">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16">
                                 <img :src="themeIconUrl(4)" class="w-full h-full object-contain transition" :class="themeImgClasses(4)" :style="themeImgStyle(4)">
-                            </button>
-                            <div class="flex gap-1 mt-1" x-show="themes[4].active">
+                            </div>
+                            <div class="flex gap-1 mt-1">
                                 <template x-for="i in [1,2,3]" :key="'c4'+i">
                                     <img :src="checkboxUrl(4,i)" class="w-3 h-3">
                                 </template>
@@ -151,7 +151,7 @@
                                         <template x-for="col in [1,2,3,4,5]" :key="'cell'+row+'-'+col">
                                             <div class="aspect-square rounded flex items-center justify-center p-1 bg-black/20 border border-black/40">
                                                 <template x-if="col === 3">
-                                                    <img :src="badgeMiddleUrl(row)" class="w-full h-full object-contain">
+                                                    <img :src="badgeMiddleUrl(row)" class="w-full h-full object-contain" :class="themeSpinRow === row ? 'pulse-glow' : ''">
                                                 </template>
                                                 <template x-if="col !== 3">
                                                     <img :src="categoryIconUrl(categoryAt(row,col))" class="w-full h-full object-contain transition"

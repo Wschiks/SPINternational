@@ -13,13 +13,13 @@ export function reelsMixin() {
 
         canSpin() {
             return this.started && !this.isWon && this.score >= this.spinCost
-                &&!this.spinning && !this.hasQuestion && !this.ledActive && !this.themeBlinkActive;
+                &&!this.spinning && !this.hasQuestion && !this.ledActive && !this.themeSpinActive;
         },
         canHold(i) {
             return this.started && !this.spinning && !this.hasQuestion && this.hasReelResult && !this.reels[i].held && !this.reels[i].used;
         },
         canUnhold(i) {
-            return this.started && !this.spinning && !this.hasQuestion && !this.ledActive && !this.themeBlinkActive && this.reels[i].held;
+            return this.started && !this.spinning && !this.hasQuestion && !this.ledActive && !this.themeSpinActive && this.reels[i].held;
         },
 
         async spin() {

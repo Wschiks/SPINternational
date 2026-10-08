@@ -17,7 +17,7 @@ use RuntimeException;
  * @see ReelService        spin / hold / unhold
  * @see QuestionService    picking + tracking used questions
  * @see BadgeboardService  icon activation, vertical/horizontal bonuses
- * @see ThemeService       theme selection, theme questions, win condition
+ * @see ThemeService       row-earned theme questions, win condition
  * @see ScoreService       every point change + its audit trail
  */
 class GameEngine
@@ -140,7 +140,10 @@ class GameEngine
 
             $result['badgeboard_update'] = $this->badgeboard->activateIcon($session, $question->category_id);
             $result['vertical_bonus'] = $this->badgeboard->checkVerticalBonus($session, $question->category_id);
-            $result['horizontal_bonus'] = $this->badgeboard->checkHorizontalBonus($session, $question->category_id);
+            $completedRow = $this->badgeboard->checkHorizontalBonus($session, $question->category_id);
+            if ($completedRow) {
+                $result['horizontal_bonus'] = $this->themes->startRowTheme($session, $completedRow['row']);
+            }
 
             $session->update(['led_krans_pending' => true]);
             $result['trigger_led_krans'] = true;
@@ -228,13 +231,6 @@ class GameEngine
         ];
     }
 
-    public function selectTheme(GameSession $session, int $themeId): array
-    {
-        $this->assertActive($session);
-
-        return $this->themes->select($session, $themeId);
-    }
-
     public function themeAnswer(GameSession $session, int $questionId, mixed $userAnswer): array
     {
         $this->assertActive($session);
@@ -267,7 +263,6 @@ class GameEngine
             'current_theme_id' => $session->current_theme_id,
             'current_theme_question_id' => $session->current_theme_question_id,
             'led_krans_pending' => $session->led_krans_pending,
-            'theme_credits' => $session->theme_credits,
             'badgeboard' => [
                 'icon_states' => $board->icon_states,
                 'verticals' => [

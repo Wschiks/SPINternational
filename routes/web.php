@@ -28,7 +28,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/game/{session}/skip', [GameController::class, 'skip'])->name('game.skip');
     Route::post('/game/{session}/reject', [GameController::class, 'reject'])->name('game.reject');
     Route::post('/game/{session}/led-krans/stop', [GameController::class, 'ledKransStop'])->name('game.led-krans.stop');
-    Route::post('/game/{session}/theme/select', [GameController::class, 'themeSelect'])->name('game.theme.select');
     Route::post('/game/{session}/theme-answer', [GameController::class, 'themeAnswer'])->name('game.theme-answer');
 });
 
