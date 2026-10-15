@@ -9865,7 +9865,7 @@
         "answer_options": null,
         "correct_answer": {
             "min": 1000,
-            "max": null
+            "max": 1100
         },
         "hotspot_coords": null,
         "feedback_correct": "Goed hoor! Heavy stuff hè?",
@@ -10685,7 +10685,7 @@
         "answer_options": null,
         "correct_answer": {
             "min": 7000,
-            "max": null
+            "max": 7200
         },
         "hotspot_coords": null,
         "feedback_correct": "Gokje? Goed hoor.",

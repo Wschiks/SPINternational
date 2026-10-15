@@ -47,8 +47,8 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
 
         badge: { icon_states: {}, verticals: {}, horizontals: {} },
 
-        // Set by the LED krans "async" step so pressStop can resume whatever
-        // follow-up was queued after it.
+        // Set by a mixin's "async" step (led krans / theme blink) so pressStop
+        // can resume whatever follow-up was queued after it.
         pendingFollowUp: null,
 
         ...apiMixin(),
@@ -66,6 +66,7 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
         destroy() {
             this.destroyEffects();
             clearInterval(this.ledTimer);
+            clearInterval(this.themeBlinkTimer);
         },
 
         get scoreDigits() {
@@ -84,6 +85,7 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
             this.spinCost = state.spin_cost;
             this.badge = state.badgeboard;
             this.themes = state.themes;
+            this.themeCredits = state.theme_credits;
             this.isWon = state.is_won;
             this.showPointChange(this.scoreChange);
         },
@@ -101,10 +103,10 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
         },
 
         canChangeLevel() {
-            return !this.hasQuestion && !this.spinning && !this.ledActive && !this.themeSpinActive;
+            return !this.hasQuestion && !this.spinning && !this.ledActive && !this.themeBlinkActive;
         },
         stopEnabled() {
-            return this.ledActive && !this.ledFlash;
+            return this.ledActive || this.themeBlinkActive;
         },
 
         cycleLevel() {
@@ -113,23 +115,32 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
             this.api('POST', `/game/${this.sessionId}/level`, { level: next }).then((state) => this.applyState(state));
         },
 
-        // STOP claims the LED krans bonus.
+        // STOP is dual-purpose: it claims the LED krans bonus, or (if a theme
+        // is blinking instead) confirms the currently-lit theme.
         async pressStop() {
-            if (!this.ledActive || this.ledFlash) return;
-            clearInterval(this.ledTimer);
-            const idx = this.ledIndex;
-            const winShow = this.playLedWin(idx);
-            try {
+            if (this.ledActive) {
+                clearInterval(this.ledTimer);
+                this.ledActive = false;
+                const idx = this.ledIndex;
                 const data = await this.api('POST', `/game/${this.sessionId}/led-krans/stop`, { index: idx });
                 this.applyState(data.state);
                 this.lastPointsLabel = String(data.points);
                 this.message = `+${data.points} bonus!`;
                 this.celebrate('bonus');
-            } finally {
-                await winShow;
-                this.ledActive = false;
+                this.resumeFollowUps();
+                return;
             }
-            this.resumeFollowUps();
+            if (this.themeBlinkActive) {
+                clearInterval(this.themeBlinkTimer);
+                this.themeBlinkActive = false;
+                const themeId = this.themeBlinkList[this.themeBlinkIndex];
+                try {
+                    const data = await this.api('POST', `/game/${this.sessionId}/theme/select`, { theme_id: themeId });
+                    this.applyState(data.state);
+                    this.openQuestion(data.question, true, data.slot, data.points);
+                } catch (e) {}
+                this.resumeFollowUps();
+            }
         },
 
         resumeFollowUps() {

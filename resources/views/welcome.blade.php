@@ -19,11 +19,7 @@
                     <a href="{{ route('register') }}" class="arcade-btn rounded-xl border-cyan-300/60 bg-[#1d2442] px-7 py-3.5 text-sm font-bold text-cyan-100 focus:outline-none focus:ring-2 focus:ring-cyan-300">Account aanmaken</a>
                 @endauth
             </div>
-            <div class="grid w-full max-w-2xl gap-3 pt-5 text-left sm:grid-cols-3">
-                <div class="rounded-xl border border-cyan-300/20 bg-white/5 p-4"><span class="text-xl" aria-hidden="true">🎰</span><h2 class="mt-2 text-sm font-bold">Spin</h2><p class="mt-1 text-xs leading-relaxed text-slate-400">Zoek matches op de rollen.</p></div>
-                <div class="rounded-xl border border-fuchsia-300/20 bg-white/5 p-4"><span class="text-xl" aria-hidden="true">💡</span><h2 class="mt-2 text-sm font-bold">Leer</h2><p class="mt-1 text-xs leading-relaxed text-slate-400">Beantwoord verrassende vragen.</p></div>
-                <div class="rounded-xl border border-amber-300/20 bg-white/5 p-4"><span class="text-xl" aria-hidden="true">🏆</span><h2 class="mt-2 text-sm font-bold">Win</h2><p class="mt-1 text-xs leading-relaxed text-slate-400">Verzamel punten en thema's.</p></div>
-            </div>
+
         </div>
     </main>
 </x-bare-layout>
