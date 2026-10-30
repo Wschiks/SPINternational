@@ -5,6 +5,7 @@ import { questionMixin } from '../../resources/js/game/question.js';
 import { themeMixin } from '../../resources/js/game/theme.js';
 import { assetsMixin } from '../../resources/js/game/assets.js';
 import { effectsMixin } from '../../resources/js/game/effects.js';
+import { progressMixin } from '../../resources/js/game/progress.js';
 
 function playableReels() {
     return { ...reelsMixin(), started: true, score: 100, spinCost: 10, sessionId: 1 };
@@ -118,6 +119,107 @@ test('an answer cannot be sent twice while the first request is pending', async 
 
     assert.equal(requests, 1);
     assert.equal(game.submitting, false);
+});
+
+test('skip sends one request and opens the replacement question', async () => {
+    const game = { ...questionMixin(), sessionId: 4, lastPointsLabel: '0', message: '' };
+    game.openQuestion({ id: 7, type: 'mc_1goed' }, false, null, 10);
+    let finishSkip;
+    let requests = 0;
+    game.api = () => {
+        requests++;
+        return new Promise((resolve) => { finishSkip = resolve; });
+    };
+    game.applyState = () => {};
+
+    const firstSkip = game.skip();
+    await game.skip();
+    finishSkip({ question: { id: 8, type: 'mc_1goed' }, points: 20, state: {} });
+    await firstSkip;
+
+    assert.equal(requests, 1);
+    assert.equal(game.question.id, 8);
+    assert.equal(game.questionPoints, 20);
+    assert.equal(game.lastPointsLabel, '-20');
+    assert.equal(game.message, 'Vraag overgeslagen: -20 punten');
+});
+
+test('reject closes the active question after the server accepts it', async () => {
+    const game = { ...questionMixin(), sessionId: 4, heldReelIndex: 1, lastPointsLabel: '0', message: '' };
+    game.openQuestion({ id: 7, type: 'mc_1goed' }, false, null, 10);
+    game.api = async () => ({ state: {} });
+    game.applyState = () => {};
+
+    await game.reject();
+
+    assert.equal(game.hasQuestion, false);
+    assert.equal(game.question, null);
+    assert.equal(game.heldReelIndex, null);
+    assert.equal(game.lastPointsLabel, '-10');
+    assert.equal(game.message, 'Vraag afgewezen: -10 punten');
+});
+
+test('saved progress restores reels and an active matching question', async (context) => {
+    const previousLocalStorage = globalThis.localStorage;
+    const storedValues = new Map([['spin.game.progress', JSON.stringify({ sessionId: 12, score: 80, level: 2 })]]);
+    globalThis.localStorage = {
+        getItem: (key) => storedValues.get(key) ?? null,
+        setItem: (key, value) => storedValues.set(key, value),
+        removeItem: (key) => storedValues.delete(key),
+    };
+    context.after(() => {
+        if (previousLocalStorage) globalThis.localStorage = previousLocalStorage;
+        else delete globalThis.localStorage;
+    });
+
+    const game = {
+        ...reelsMixin(),
+        ...questionMixin(),
+        ...progressMixin(),
+        started: false,
+        sessionId: null,
+        score: 0,
+        level: 1,
+        message: '',
+    };
+    game.api = async (method, path) => {
+        assert.equal(method, 'GET');
+        assert.equal(path, '/game/12/state');
+
+        return {
+            session_id: 12,
+            current_score: 80,
+            level_selected: 2,
+            reels: [7, 7, 3],
+            held_reels: [1],
+            used_reels: [2],
+            match_type: 'double',
+            current_reel_index: 2,
+            active_question: {
+                kind: 'regular',
+                question: { id: 9, type: 'matching', options: { left: [], right: [] } },
+                points: 40,
+                slot: null,
+            },
+            led_krans_pending: false,
+        };
+    };
+    game.applyState = (state) => {
+        game.sessionId = state.session_id;
+        game.score = state.current_score;
+        game.level = state.level_selected;
+    };
+
+    await game.resumeSavedGame();
+
+    assert.equal(game.started, true);
+    assert.equal(game.reels[0].held, true);
+    assert.equal(game.reels[1].used, true);
+    assert.equal(game.heldReelIndex, 1);
+    assert.equal(game.hasReelResult, true);
+    assert.equal(game.question.id, 9);
+    assert.equal(game.questionPoints, 40);
+    assert.equal(game.message, 'Opgeslagen spel hervat');
 });
 
 test('a completed row spins its question mark onto the chosen theme, then opens its question', (context) => {

@@ -23,7 +23,13 @@ class GamePointsTest extends TestCase
 
         $response = $this->actingAs($user)->postJson('/game/start', ['level' => 1]);
 
-        $response->assertOk()->assertJsonPath('current_score', 100)->assertJsonPath('spin_cost', 10);
+        $response->assertOk()
+            ->assertJsonPath('current_score', 100)
+            ->assertJsonPath('spin_cost', 10)
+            ->assertJsonCount(1, 'score_history')
+            ->assertJsonPath('score_history.0.event_type', 'starting_points')
+            ->assertJsonPath('score_history.0.points_delta', 100)
+            ->assertJsonPath('score_history.0.cumulative_score', 100);
         $this->assertDatabaseHas('game_sessions', ['id' => $response->json('session_id'), 'current_score' => 100]);
         $this->assertDatabaseHas('score_events', [
             'session_id' => $response->json('session_id'),
@@ -42,7 +48,12 @@ class GamePointsTest extends TestCase
 
         $response = $this->postJson("/game/{$session->id}/spin");
 
-        $response->assertOk()->assertJsonPath('current_score', $remaining)->assertJsonCount(3, 'reels');
+        $response->assertOk()
+            ->assertJsonPath('current_score', $remaining)
+            ->assertJsonCount(3, 'reels')
+            ->assertJsonPath('score_history.0.event_type', 'spin_cost')
+            ->assertJsonPath('score_history.0.points_delta', -10)
+            ->assertJsonPath('score_history.0.cumulative_score', $remaining);
         $this->assertDatabaseHas('game_sessions', ['id' => $session->id, 'current_score' => $remaining]);
         $this->assertDatabaseHas('score_events', [
             'session_id' => $session->id,
@@ -163,6 +174,74 @@ class GamePointsTest extends TestCase
         $this->assertDatabaseMissing('score_events', ['event_type' => 'question_correct']);
     }
 
+    public function test_active_question_can_be_restored_from_game_state(): void
+    {
+        $session = $this->startGameSession();
+        $question = QuestionFactory::new()->create();
+        $session->update(['current_reel_result' => [7, 2, 3]]);
+        $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertOk();
+
+        $response = $this->getJson("/game/{$session->id}/state");
+
+        $response->assertOk()
+            ->assertJsonPath('current_reel_index', 1)
+            ->assertJsonPath('active_question.kind', 'regular')
+            ->assertJsonPath('active_question.question.id', $question->id)
+            ->assertJsonPath('active_question.points', 10)
+            ->assertJsonPath('active_question.slot', null);
+    }
+
+    public function test_skip_replaces_the_active_question_and_records_the_penalty(): void
+    {
+        $session = $this->startGameSession();
+        QuestionFactory::new()->count(2)->create();
+        $session->update(['current_reel_result' => [7, 2, 3]]);
+        $questionId = $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertOk()->json('question.id');
+
+        $response = $this->postJson("/game/{$session->id}/skip");
+
+        $response->assertOk()
+            ->assertJsonPath('penalty', -20)
+            ->assertJsonPath('state.current_score', 80)
+            ->assertJsonPath('state.active_question.kind', 'regular');
+        $this->assertNotSame($questionId, $response->json('question.id'));
+        $this->assertDatabaseHas('score_events', [
+            'session_id' => $session->id,
+            'event_type' => 'penalty_skip',
+            'points_delta' => -20,
+            'cumulative_score' => 80,
+            'question_id' => $questionId,
+        ]);
+    }
+
+    public function test_reject_closes_the_active_question_and_records_the_penalty(): void
+    {
+        $session = $this->startGameSession();
+        QuestionFactory::new()->create();
+        $session->update(['current_reel_result' => [7, 2, 3]]);
+        $questionId = $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertOk()->json('question.id');
+
+        $response = $this->postJson("/game/{$session->id}/reject");
+
+        $response->assertOk()
+            ->assertJsonPath('penalty', -10)
+            ->assertJsonPath('state.current_score', 90)
+            ->assertJsonPath('state.active_question', null);
+        $this->assertDatabaseHas('game_sessions', [
+            'id' => $session->id,
+            'current_score' => 90,
+            'current_question_id' => null,
+            'current_reel_index' => null,
+        ]);
+        $this->assertDatabaseHas('score_events', [
+            'session_id' => $session->id,
+            'event_type' => 'penalty_reject',
+            'points_delta' => -10,
+            'cumulative_score' => 90,
+            'question_id' => $questionId,
+        ]);
+    }
+
     public function test_another_player_cannot_spend_session_points(): void
     {
         $session = $this->startGameSession();
@@ -176,7 +255,17 @@ class GamePointsTest extends TestCase
     public function test_game_page_shows_the_point_rules(): void
     {
         $this->actingAs(User::factory()->create())->get('/game')
-            ->assertOk()->assertSee('100 punten')->assertSee('10 punten')->assertSee('JOUW PUNTEN');
+            ->assertOk()
+            ->assertSee('100 punten')
+            ->assertSee('10 punten')
+            ->assertSee('JOUW PUNTEN')
+            ->assertSee('Spelregels')
+            ->assertSee('Tutorial')
+            ->assertSee('Scorehistorie')
+            ->assertSee('Instellingen')
+            ->assertSee('VOORTGANG OPSLAAN')
+            ->assertSee('REJECT')
+            ->assertSee('SKIP');
     }
 
     #[TestWith([true, 1])]
@@ -185,8 +274,8 @@ class GamePointsTest extends TestCase
     {
         $session = $this->startGameSession();
         $themeQuestion = ThemeQuestion::create([
-            'theme_id' => 1, 'theme_name' => 'Duurzaamheid', 'question_type' => 'mc_1goed',
-            'question_text' => 'Groen?', 'difficulty' => 1,
+            'theme_id' => 1, 'theme_name' => 'Duurzaamheid', 'question_number' => 1, 'question_type' => 'mc_1goed',
+            'question_text' => 'Groen?', 'difficulty' => 1, 'points_base' => 10,
             'answer_options' => [['key' => 'a', 'text' => 'Ja'], ['key' => 'b', 'text' => 'Nee']],
             'correct_answer' => 'a', 'feedback_correct' => 'Goed', 'feedback_wrong' => 'Fout',
         ]);
@@ -206,6 +295,10 @@ class GamePointsTest extends TestCase
             ->assertJsonPath('horizontal_bonus.theme_id', 1)
             ->assertJsonPath('horizontal_bonus.slot', 1)
             ->assertJsonPath('horizontal_bonus.question.id', $themeQuestion->id)
+            ->assertJsonPath('state.active_question.kind', 'theme')
+            ->assertJsonPath('state.active_question.question.id', $themeQuestion->id)
+            ->assertJsonPath('state.active_question.points', 50)
+            ->assertJsonPath('state.active_question.slot', 1)
             ->assertJsonPath('state.badgeboard.icon_states.2', [1 => 1, 2 => 1, 3 => null, 4 => 1, 5 => 1]);
 
         $this->postJson("/game/{$session->id}/theme-answer", ['question_id' => $themeQuestion->id, 'answer' => $answerRight ? 'a' : 'b'])

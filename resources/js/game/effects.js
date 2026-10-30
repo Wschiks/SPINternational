@@ -3,6 +3,7 @@ const COLORS = ['#67e8f9', '#f0abfc', '#fde047', '#86efac'];
 export function effectsMixin() {
     let motionPreference;
     let motionListener;
+    let userAnimationsEnabled = true;
     let nextEffectId = 0;
     let celebrationTimer;
     const pointTimers = new Set();
@@ -15,12 +16,22 @@ export function effectsMixin() {
 
         initEffects() {
             motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
-            this.reducedMotion = motionPreference.matches;
+            userAnimationsEnabled = window.localStorage?.getItem('spin.settings.animations') !== 'false';
+            this.reducedMotion = motionPreference.matches || !userAnimationsEnabled;
             motionListener = (event) => {
-                this.reducedMotion = event.matches;
-                if (event.matches) this.clearEffects();
+                this.reducedMotion = event.matches || !userAnimationsEnabled;
+                if (this.reducedMotion) this.clearEffects();
             };
             motionPreference.addEventListener('change', motionListener);
+        },
+
+        setUserMotionPreference(enabled) {
+            userAnimationsEnabled = enabled;
+            this.reducedMotion = (motionPreference?.matches ?? false) || !enabled;
+
+            if (this.reducedMotion) {
+                this.clearEffects();
+            }
         },
 
         showPointChange(delta) {

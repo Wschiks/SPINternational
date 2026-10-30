@@ -6,6 +6,8 @@ import { themeMixin } from './theme';
 import { ledKransMixin } from './ledkrans';
 import { questionMixin } from './question';
 import { effectsMixin } from './effects';
+import { tutorialMixin } from './tutorial';
+import { progressMixin } from './progress';
 
 const MESSAGES = {
     gameplay: ['Give it a spin', 'Nice try', 'Keep on going', 'Well done', 'Congratulations'],
@@ -41,6 +43,7 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
         score: 0,
         spinCost: pointRules.spinCost,
         scoreChange: null,
+        scoreHistory: [],
         lastPointsLabel: '0',
         message: 'Give it a spin',
         isWon: false,
@@ -58,13 +61,17 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
         ...ledKransMixin(ledKrans),
         ...questionMixin(),
         ...effectsMixin(),
+        ...tutorialMixin(),
+        ...progressMixin(),
 
         init() {
             this.initEffects();
+            this.initTutorial();
         },
 
         destroy() {
             this.destroyEffects();
+            this.destroyTutorial();
             clearInterval(this.ledTimer);
             clearInterval(this.themeBlinkTimer);
         },
@@ -82,12 +89,24 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
             this.sessionId = state.session_id;
             this.level = state.level_selected;
             this.score = state.current_score;
+            this.scoreHistory = state.score_history ?? [];
             this.spinCost = state.spin_cost;
             this.badge = state.badgeboard;
             this.themes = state.themes;
             this.themeCredits = state.theme_credits;
             this.isWon = state.is_won;
             this.showPointChange(this.scoreChange);
+            this.saveProgress();
+
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('game-state-updated', {
+                    detail: {
+                        sessionId: this.sessionId,
+                        score: this.score,
+                        scoreHistory: this.scoreHistory,
+                    },
+                }));
+            }
         },
 
         async startGame() {
@@ -95,6 +114,7 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
             this.applyState(state);
             this.started = true;
             this.message = `Je start met ${this.score} punten. Kies SPIN!`;
+            this.$nextTick(() => this.maybeStartTutorial());
         },
 
         say(category) {
@@ -149,25 +169,5 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
             next?.();
         },
 
-        async skip() {
-            if (!this.hasQuestion || this.isThemeQuestion) return;
-            const data = await this.api('POST', `/game/${this.sessionId}/skip`, {});
-            this.applyState(data.state);
-            this.openQuestion(data.question, false, null, data.points);
-            this.lastPointsLabel = '-20';
-            this.message = 'Skipped';
-        },
-
-        async reject() {
-            if (!this.hasQuestion || this.isThemeQuestion) return;
-            const data = await this.api('POST', `/game/${this.sessionId}/reject`, {});
-            this.applyState(data.state);
-            this.hasQuestion = false;
-            this.question = null;
-            this.draft = null;
-            this.heldReelIndex = null;
-            this.lastPointsLabel = '-10';
-            this.message = 'Rejected';
-        },
     };
 }

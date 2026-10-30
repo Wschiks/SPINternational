@@ -4,6 +4,8 @@ namespace App\Services\Game;
 
 use App\Models\GameSession;
 use App\Models\Question;
+use App\Models\ScoreEvent;
+use App\Models\ThemeQuestion;
 use App\Models\User;
 use App\Support\GameCatalog;
 use RuntimeException;
@@ -247,12 +249,24 @@ class GameEngine
     {
         $session->loadMissing('badgeboardState');
         $board = $session->badgeboardState;
+        $scoreHistory = $session->scoreEvents()
+            ->latest('id')
+            ->limit(30)
+            ->get(['id', 'event_type', 'points_delta', 'cumulative_score', 'timestamp'])
+            ->map(fn (ScoreEvent $event): array => [
+                'id' => $event->id,
+                'event_type' => $event->event_type,
+                'points_delta' => $event->points_delta,
+                'cumulative_score' => $event->cumulative_score,
+                'timestamp' => $event->timestamp->toIso8601String(),
+            ]);
 
         return [
             'session_id' => $session->id,
             'level_selected' => $session->level_selected,
             'current_score' => $session->current_score,
             'spin_cost' => GameCatalog::SPIN_COST,
+            'score_history' => $scoreHistory,
             'is_won' => $session->is_won,
             'reels' => $session->current_reel_result,
             'match_type' => $session->current_match_type,
@@ -260,9 +274,12 @@ class GameEngine
             'used_reels' => $session->used_reels ?? [],
             'current_category_id' => $session->current_category_id,
             'current_question_id' => $session->current_question_id,
+            'current_reel_index' => $session->current_reel_index,
             'current_theme_id' => $session->current_theme_id,
             'current_theme_question_id' => $session->current_theme_question_id,
             'led_krans_pending' => $session->led_krans_pending,
+            'theme_credits' => $session->theme_credits,
+            'active_question' => $this->activeQuestion($session),
             'badgeboard' => [
                 'icon_states' => $board->icon_states,
                 'verticals' => [
@@ -292,5 +309,40 @@ class GameEngine
         if ($session->is_won) {
             throw new RuntimeException('This game session is already won.');
         }
+    }
+
+    /**
+     * @return array{kind: 'regular'|'theme', question: array<string, mixed>, points: int, slot: int|null}|null
+     */
+    private function activeQuestion(GameSession $session): ?array
+    {
+        if ($session->current_question_id) {
+            $question = Question::find($session->current_question_id);
+
+            return $question ? [
+                'kind' => 'regular',
+                'question' => $question->toPublicArray(),
+                'points' => (int) $session->current_points,
+                'slot' => null,
+            ] : null;
+        }
+
+        if (! $session->current_theme_question_id || ! $session->current_theme_id) {
+            return null;
+        }
+
+        $question = ThemeQuestion::find($session->current_theme_question_id);
+        $checksColumn = $session->themeChecksColumn($session->current_theme_id);
+
+        return $question ? [
+            'kind' => 'theme',
+            'question' => $question->toPublicArray(),
+            'points' => match ($session->level_selected) {
+                3 => 100,
+                2 => 75,
+                default => 50,
+            },
+            'slot' => min(3, $session->{$checksColumn} + 1),
+        ] : null;
     }
 }

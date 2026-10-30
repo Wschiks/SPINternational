@@ -22,6 +22,9 @@
     <x-site-menu />
     <div class="min-h-screen flex items-center justify-center py-6"
          x-data='gameApp(@json($categories), @json($themes), @json($ledKrans), @json($assetPaths), { spinCost: @json($spinCost) })'
+         @start-game-tutorial.window="startTutorial()"
+         @game-settings-changed.window="setUserMotionPreference($event.detail.animationsEnabled)"
+         @keydown.escape.window="tutorialActive && finishTutorial()"
          @dev-show-answers.window="devShowAnswers = $event.detail">
         <div class="game-confetti-layer" aria-hidden="true">
             <template x-for="piece in confetti" :key="piece.id">
@@ -42,6 +45,22 @@
                             <p>Elke spin kost <strong>{{ $spinCost }} punten</strong>.</p>
                             <p class="text-green-300">Goed antwoord: +10 tot +50 punten.</p>
                         </div>
+                        <template x-if="savedProgress">
+                            <div class="w-full rounded-xl border border-emerald-300/40 bg-emerald-950/60 p-4 text-left text-xs shadow-[0_0_20px_rgba(52,211,153,0.12)]">
+                                <p class="font-black text-emerald-200">Opgeslagen spel gevonden</p>
+                                <p class="mt-1 text-slate-300"><span x-text="savedProgress.score"></span> punten · level <span x-text="savedProgress.level"></span></p>
+                                <div class="mt-3 flex gap-2">
+                                    <button type="button" @click="resumeSavedGame()" :disabled="progressLoading"
+                                            class="arcade-btn flex-1 rounded-lg border-emerald-300 bg-emerald-600 px-3 py-2.5 font-black text-white disabled:cursor-wait disabled:opacity-50">
+                                        <span x-text="progressLoading ? 'LADEN...' : 'HERVAT SPEL'"></span>
+                                    </button>
+                                    <button type="button" @click="discardSavedProgress()"
+                                            class="rounded-lg border border-white/15 px-3 py-2.5 font-bold text-slate-300 hover:border-white/30 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-cyan-300">
+                                        Verwijder
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
                         <div class="flex items-center gap-2 text-[10px]">
                             <span>Level:</span>
                             <template x-for="lvl in [1,2,3]" :key="lvl">
@@ -53,8 +72,9 @@
                         </div>
                         <button type="button" @click="startGame()"
                                 class="px-8 py-3 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-xs neon-box">
-                            START SPEL
+                            <span x-text="savedProgress ? 'NIEUW SPEL' : 'START SPEL'"></span>
                         </button>
+                        <p class="max-w-xs text-[10px] leading-relaxed text-slate-400">Je voortgang wordt automatisch lokaal op dit apparaat opgeslagen.</p>
                     </div>
                 </template>
 
@@ -144,7 +164,7 @@
                         </div>
 
                         <!-- SCORE readout: real 7-segment LED digits -->
-                        <div class="relative flex flex-col items-center gap-2 rounded-xl border border-cyan-400/50 bg-black p-3" role="status" aria-live="polite" aria-atomic="true">
+                        <div data-tutorial-target="score" class="relative flex flex-col items-center gap-2 rounded-xl border border-cyan-400/50 bg-black p-3" role="status" aria-live="polite" aria-atomic="true">
                             <div class="game-point-bursts" aria-hidden="true">
                                 <template x-for="burst in pointBursts" :key="burst.id">
                                     <span class="game-point-burst" :class="burst.delta > 0 ? 'text-green-300' : 'text-orange-300'"
@@ -201,7 +221,7 @@
 
                     <!-- BLOK 2: REELS + displays -->
                     <div class="rounded-b-2xl border-x-2 border-b-2 border-indigo-400 bg-gradient-to-b from-[#0d0d1f] to-black p-2">
-                        <div class="flex items-center gap-1.5">
+                        <div data-tutorial-target="reels" class="flex items-center gap-1.5">
                             <div class="flex flex-col items-center gap-1 w-10">
                                 <button type="button" class="arcade-btn bg-emerald-600 text-white text-[8px] px-1 py-1.5 w-full" @click="cycleLevel()" :disabled="!canChangeLevel()">LVL</button>
                                 <template x-for="n in [3,2,1]" :key="'lvl'+n">
@@ -235,23 +255,24 @@
                             </div>
                         </div>
 
-                        <!-- REJECT / SKIP -->
-                        <div class="flex justify-center gap-2 my-2">
-                            <button type="button" class="arcade-btn px-4 py-1.5 rounded-full bg-orange-600 text-white text-[10px] font-bold" @click="reject()" :disabled="!hasQuestion">REJECT</button>
-                            <button type="button" class="arcade-btn px-4 py-1.5 rounded-full bg-sky-600 text-white text-[10px] font-bold" @click="skip()" :disabled="!hasQuestion">SKIP</button>
+                        <!-- LOCAL PROGRESS -->
+                        <div class="my-2 flex items-center justify-center gap-2">
+                            <button type="button" class="arcade-btn rounded-full border border-cyan-300/50 bg-cyan-950 px-4 py-1.5 text-[10px] font-bold text-cyan-100"
+                                    @click="saveProgress(true)">VOORTGANG OPSLAAN</button>
+                            <span class="text-[9px] text-slate-500">automatisch lokaal</span>
                         </div>
 
                         <!-- MENU / HOLD / SPIN -->
                         <div class="flex justify-center gap-1.5">
-                            <button type="button" @click="$dispatch('toggle-site-menu')" class="arcade-btn flex-1 py-3 bg-stone-300 text-black text-[10px] font-bold">MENU</button>
+                            <button type="button" data-tutorial-target="menu" data-game-tooltip="Spelregels en opties" @click="$dispatch('toggle-site-menu', { sessionId, score, scoreHistory })" class="arcade-btn flex-1 py-3 bg-stone-300 text-black text-[10px] font-bold">MENU</button>
                             <template x-for="(reel, i) in reels" :key="'hold'+i">
-                                <button type="button" class="arcade-btn flex-1 py-3 text-[10px] font-bold"
+                                <button type="button" data-tutorial-target="hold" data-game-tooltip="Houd deze rol vast" class="arcade-btn flex-1 py-3 text-[10px] font-bold"
                                         :class="reel.held ? 'bg-green-600 text-white' : (reel.used ? 'bg-stone-300 text-black opacity-40 cursor-not-allowed' : 'bg-stone-300 text-black')"
                                         @click="toggleHold(i)" :disabled="reel.held ? !canUnhold(i) : !canHold(i)">
                                     <span x-text="reel.held ? 'HELD' : 'HOLD'"></span>
                                 </button>
                             </template>
-                            <button type="button" class="arcade-btn flex-1 py-3 bg-green-600 text-white text-[10px] font-bold disabled:opacity-40 disabled:cursor-not-allowed" @click="spin()" :disabled="!canSpin()">
+                            <button type="button" data-tutorial-target="spin" data-game-tooltip="Draai de vrije rollen" class="arcade-btn flex-1 py-3 bg-green-600 text-white text-[10px] font-bold disabled:opacity-40 disabled:cursor-not-allowed" @click="spin()" :disabled="!canSpin()">
                                 <span x-text="spinning ? '...' : 'SPIN'"></span>
                                 <span class="block text-[9px]" x-text="'-' + spinCost + ' pnt'"></span>
                             </button>
@@ -264,19 +285,22 @@
                     </div>
 
                     <!-- QUESTION MODAL -->
-                    <div x-show="question" x-cloak class="fixed inset-0 z-30 flex items-center justify-center bg-black/85 p-4">
-                        <div class="bg-[#1a1a2e] border-2 border-fuchsia-600 rounded-xl p-5 max-w-md w-full text-xs max-h-[85vh] overflow-y-auto">
-                            <div class="text-yellow-300 mb-2" x-show="isThemeQuestion">🎯 THEME QUESTION <span x-text="themeSlot"></span>/3</div>
-                            <div class="text-cyan-300 mb-1" x-text="question?.category_name ?? question?.theme_name"></div>
-                            <div class="mb-3 flex flex-wrap justify-between gap-2 text-xs">
-                                <span class="text-green-300" x-show="!feedback">Goed antwoord: <strong x-text="'+' + questionPoints + ' punten'"></strong></span>
-                                <span class="text-cyan-200">Jouw punten: <strong x-text="score"></strong></span>
-                            </div>
-                            <div class="mb-3" x-text="question?.text"></div>
+                    <div x-show="question" x-cloak class="fixed inset-0 z-30 flex items-center justify-center bg-black/85 p-2 sm:p-4">
+                        <section role="dialog" aria-modal="true" aria-labelledby="question-title"
+                                 class="flex max-h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-xl border-2 border-fuchsia-600 bg-[#1a1a2e] text-xs shadow-[0_24px_80px_rgba(0,0,0,0.75),0_0_28px_rgba(192,38,211,0.22)] sm:max-h-[calc(100dvh-2rem)]"
+                                 :class="['matching','sleep'].includes(question?.type) ? 'max-w-5xl' : 'max-w-md'">
+                            <div class="min-h-0 overflow-y-auto p-4 sm:p-5">
+                                <div class="text-yellow-300 mb-2" x-show="isThemeQuestion">🎯 THEME QUESTION <span x-text="themeSlot"></span>/3</div>
+                                <div class="text-cyan-300 mb-1" x-text="question?.category_name ?? question?.theme_name"></div>
+                                <div class="mb-3 flex flex-wrap justify-between gap-2 text-xs">
+                                    <span class="text-green-300" x-show="!feedback">Goed antwoord: <strong x-text="'+' + questionPoints + ' punten'"></strong></span>
+                                    <span class="text-cyan-200">Jouw punten: <strong x-text="score"></strong></span>
+                                </div>
+                                <h2 id="question-title" class="mb-4 text-sm font-black leading-relaxed text-white sm:text-base" x-text="question?.text"></h2>
 
-                            <div x-show="question?.image_path" class="mb-3 h-32 bg-gray-800 border border-gray-600 rounded flex items-center justify-center text-[9px] text-gray-400">
-                                [afbeelding]
-                            </div>
+                                <div x-show="question?.image_path" class="mb-3 h-32 bg-gray-800 border border-gray-600 rounded flex items-center justify-center text-[9px] text-gray-400">
+                                    [afbeelding]
+                                </div>
 
                             <template x-if="feedback">
                                 <div class="game-answer-feedback mb-3 p-2 rounded" :class="feedback.correct ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'">
@@ -339,29 +363,40 @@
 
                                 <template x-if="['matching','sleep'].includes(question?.type)">
                                     <div>
-                                        <div class="flex gap-3 mb-2">
-                                            <div class="flex-1 flex flex-col gap-1">
+                                        <p class="mb-3 text-[11px] leading-relaxed text-slate-300">Kies eerst een antwoord links en daarna de bijpassende optie rechts. Alle opties blijven zichtbaar.</p>
+                                        <div class="grid gap-3 sm:grid-cols-2">
+                                            <section class="rounded-xl border border-white/10 bg-black/20 p-3" aria-label="Antwoorden om te koppelen">
+                                                <p class="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-fuchsia-200">1 · Kies links</p>
+                                                <div class="grid gap-2">
                                                 <template x-for="opt in question.options.left" :key="'l'+opt.key">
-                                                    <button type="button" class="px-2 py-1 rounded border text-left text-[10px]"
+                                                    <button type="button" class="min-h-11 rounded-lg border px-3 py-2 text-left text-[11px] leading-snug transition focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
                                                             :class="pairClass('from', opt.key)"
                                                             @click="pickPair('from', opt.key)">
-                                                        <span x-text="opt.text"></span><span class="text-yellow-300" x-text="devMark(opt.key, 'from')"></span>
+                                                        <span class="block font-bold" x-text="opt.text"></span><span class="text-yellow-300" x-text="devMark(opt.key, 'from')"></span>
+                                                        <span x-show="pairedWithLabel('from', opt.key)" class="mt-1 block text-[10px] text-cyan-200" x-text="pairedWithLabel('from', opt.key)"></span>
                                                     </button>
                                                 </template>
-                                            </div>
-                                            <div class="flex-1 flex flex-col gap-1">
+                                                </div>
+                                            </section>
+                                            <section class="rounded-xl border border-white/10 bg-black/20 p-3" aria-label="Bijpassende antwoorden">
+                                                <p class="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">2 · Kies rechts</p>
+                                                <div class="grid gap-2">
                                                 <template x-for="opt in question.options.right" :key="'r'+opt.key">
-                                                    <button type="button" class="px-2 py-1 rounded border text-left text-[10px]"
+                                                    <button type="button" class="min-h-11 rounded-lg border px-3 py-2 text-left text-[11px] leading-snug transition focus:outline-none focus:ring-2 focus:ring-cyan-300"
                                                             :class="pairClass('to', opt.key)"
                                                             @click="pickPair('to', opt.key)">
-                                                        <span x-text="opt.text"></span><span class="text-yellow-300" x-text="devMark(opt.key, 'to')"></span>
+                                                        <span class="block font-bold" x-text="opt.text"></span><span class="text-yellow-300" x-text="devMark(opt.key, 'to')"></span>
+                                                        <span x-show="pairedWithLabel('to', opt.key)" class="mt-1 block text-[10px] text-cyan-200" x-text="pairedWithLabel('to', opt.key)"></span>
                                                     </button>
                                                 </template>
-                                            </div>
+                                                </div>
+                                            </section>
                                         </div>
-                                        <div class="text-[9px] text-gray-400 mb-2">Gekoppeld: <span x-text="(draft||[]).length"></span> / <span x-text="question.options.left.length"></span></div>
-                                        <button type="button" class="px-3 py-2 rounded bg-fuchsia-600 disabled:opacity-30"
-                                                :disabled="(draft||[]).length !== question.options.left.length" @click="submit()">Bevestig</button>
+                                        <div class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white/5 p-3">
+                                            <div class="text-[10px] text-slate-300">Gekoppeld: <strong class="text-white" x-text="(draft||[]).length"></strong> / <span x-text="question.options.left.length"></span></div>
+                                            <button type="button" class="min-h-11 rounded-lg bg-fuchsia-600 px-4 py-2 font-black text-white transition hover:bg-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-300 disabled:cursor-not-allowed disabled:opacity-30"
+                                                    :disabled="(draft||[]).length !== question.options.left.length || submitting" @click="submit()">Bevestig koppelingen</button>
+                                            </div>
                                     </div>
                                 </template>
 
@@ -388,7 +423,40 @@
                                 </template>
                             </div>
                             </template>
-                        </div>
+                            </div>
+
+                            <div x-show="!feedback && !isThemeQuestion" class="flex flex-wrap items-center gap-2 border-t border-white/10 bg-black/20 px-4 py-3 sm:px-5">
+                                <p class="mr-auto text-[10px] leading-relaxed text-slate-400">Wil je deze vraag niet beantwoorden?</p>
+                                <button type="button" class="arcade-btn min-h-11 rounded-lg bg-orange-600 px-4 py-2 text-[10px] font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
+                                        @click="reject()" :disabled="submitting || questionActionPending">
+                                    REJECT <span class="block text-[9px] font-medium text-orange-100">-10 punten</span>
+                                </button>
+                                <button type="button" class="arcade-btn min-h-11 rounded-lg bg-sky-600 px-4 py-2 text-[10px] font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
+                                        @click="skip()" :disabled="submitting || questionActionPending">
+                                    SKIP <span class="block text-[9px] font-medium text-sky-100">-20 punten</span>
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div x-show="tutorialActive" x-cloak class="pointer-events-none fixed inset-0 z-[70]" aria-live="polite">
+                        <div class="absolute inset-0 bg-black/70"></div>
+                        <section role="dialog" aria-modal="true" aria-labelledby="tutorial-title"
+                                 class="pointer-events-auto fixed z-[80] rounded-2xl border-2 border-cyan-300 bg-[#17172f] p-5 text-left text-white shadow-[0_20px_70px_rgba(0,0,0,0.8),0_0_28px_rgba(34,211,238,0.45)]"
+                                 :style="tutorialPosition">
+                            <div class="mb-3 flex items-start justify-between gap-4">
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300" x-text="`Stap ${tutorialIndex + 1} van ${tutorialSteps.length}`"></p>
+                                    <h2 id="tutorial-title" class="mt-1 text-base font-black" x-text="tutorialStep.title"></h2>
+                                </div>
+                                <button type="button" class="rounded p-1 text-slate-300 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-300" @click="finishTutorial()" aria-label="Rondleiding sluiten">X</button>
+                            </div>
+                            <p class="text-sm leading-relaxed text-slate-200" x-text="tutorialStep.text"></p>
+                            <div class="mt-4 flex items-center justify-between gap-3">
+                                <button type="button" class="rounded-lg px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:invisible" :disabled="tutorialIndex === 0" @click="previousTutorialStep()">Vorige</button>
+                                <button type="button" class="rounded-lg bg-fuchsia-600 px-4 py-2 text-xs font-black text-white hover:bg-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-300" @click="nextTutorialStep()" x-text="tutorialIndex === tutorialSteps.length - 1 ? 'Klaar' : 'Volgende'"></button>
+                            </div>
+                        </section>
                     </div>
 
                     <!-- WIN MODAL -->

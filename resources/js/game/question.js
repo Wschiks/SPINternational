@@ -12,6 +12,7 @@ export function questionMixin() {
         pairPending: null,
         questionPoints: 0,
         submitting: false,
+        questionActionPending: false,
 
         openQuestion(q, isTheme, slot, points) {
             this.question = q;
@@ -20,10 +21,12 @@ export function questionMixin() {
             this.hasQuestion = true;
             this.questionPoints = points;
             this.feedback = null;
+            this.pairPending = null;
+            this.questionActionPending = false;
             this.draft = ['mc_2goed', 'mc_3goed', 'volgorde', 'matching', 'sleep'].includes(q.type) ? [] : null;
         },
 
-        devShowAnswers: localStorage.getItem('devShowAnswers') === '1',
+        devShowAnswers: globalThis.localStorage?.getItem?.('devShowAnswers') === '1',
 
         devAnswer() {
             return this.devShowAnswers ? (this.question?.dev_answer ?? null) : null;
@@ -94,9 +97,20 @@ export function questionMixin() {
 
         pairClass(side, key) {
             const paired = (this.draft || []).some((p) => p[side] === key);
-            if (paired) return 'bg-gray-500 border-gray-400';
-            if (side === 'from' && this.pairPending === key) return 'border-cyan-400';
-            return 'border-gray-600 hover:border-cyan-400';
+            if (paired) return 'border-cyan-300 bg-cyan-950 text-cyan-50';
+            if (side === 'from' && this.pairPending === key) return 'border-fuchsia-300 bg-fuchsia-950 text-fuchsia-50';
+            return 'border-white/15 bg-white/5 hover:border-cyan-400 hover:bg-white/10';
+        },
+
+        pairedWithLabel(side, key) {
+            const pair = (this.draft || []).find((candidate) => candidate[side] === key);
+            if (!pair) return '';
+
+            const otherSide = side === 'from' ? 'right' : 'left';
+            const otherKey = side === 'from' ? pair.to : pair.from;
+            const option = (this.question?.options?.[otherSide] || []).find((candidate) => candidate.key === otherKey);
+
+            return option ? `${side === 'from' ? '\u2192' : '\u2190'} ${option.text}` : '';
         },
 
         clickHotspot(evt) {
@@ -132,6 +146,50 @@ export function questionMixin() {
             this.message = data.correct ? `Goed antwoord! +${data.points_awarded} punten` : 'Helaas, geen punten erbij.';
 
             setTimeout(() => this.closeQuestionAndFollowUp(data), 5000);
+        },
+
+        async skip() {
+            if (!this.hasQuestion || this.isThemeQuestion || this.feedback || this.submitting || this.questionActionPending) {
+                return;
+            }
+
+            this.questionActionPending = true;
+
+            try {
+                const data = await this.api('POST', `/game/${this.sessionId}/skip`, {});
+                this.applyState(data.state);
+                this.openQuestion(data.question, false, null, data.points);
+                this.lastPointsLabel = '-20';
+                this.message = 'Vraag overgeslagen: -20 punten';
+            } catch (error) {
+                this.message = error.message || 'De vraag overslaan is niet gelukt.';
+            } finally {
+                this.questionActionPending = false;
+            }
+        },
+
+        async reject() {
+            if (!this.hasQuestion || this.isThemeQuestion || this.feedback || this.submitting || this.questionActionPending) {
+                return;
+            }
+
+            this.questionActionPending = true;
+
+            try {
+                const data = await this.api('POST', `/game/${this.sessionId}/reject`, {});
+                this.applyState(data.state);
+                this.hasQuestion = false;
+                this.question = null;
+                this.draft = null;
+                this.pairPending = null;
+                this.heldReelIndex = null;
+                this.lastPointsLabel = '-10';
+                this.message = 'Vraag afgewezen: -10 punten';
+            } catch (error) {
+                this.message = error.message || 'De vraag afwijzen is niet gelukt.';
+            } finally {
+                this.questionActionPending = false;
+            }
         },
 
         closeQuestionAndFollowUp(data) {
