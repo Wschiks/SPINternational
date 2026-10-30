@@ -116,56 +116,48 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- SCORE readout: real 7-segment LED digits -->
-                        <div class="relative flex flex-col items-center gap-2 rounded-xl border border-cyan-400/50 bg-black p-3" role="status" aria-live="polite" aria-atomic="true">
-                            <div class="game-point-bursts" aria-hidden="true">
-                                <template x-for="burst in pointBursts" :key="burst.id">
-                                    <span class="game-point-burst" :class="burst.delta > 0 ? 'text-green-300' : 'text-orange-300'"
-                                          x-text="(burst.delta > 0 ? '+' : '') + burst.delta"></span>
-                                </template>
-                            </div>
-                            <div class="text-xs font-bold tracking-widest text-cyan-200">JOUW PUNTEN</div>
-                            <span class="sr-only" x-text="score + ' punten'"></span>
-                            <div aria-hidden="true" class="flex px-3 py-2 rounded-lg bg-black border-2 border-slate-600 shadow-inner">
+                    <!-- BLOK 3: SCORE + LED KRANS + MESSAGEBOARD, placed on the design's own art (see .score-led in app.css) -->
+                    <div class="border-x-2 border-indigo-400">
+                        <div class="score-led" style="--score-led-bkg: url('{{ asset('images/game/panels/score-led-bkg.png') }}'); --led-board: url('{{ asset('images/game/panels/led-board.png') }}');">
+                            <div class="score-display" role="status" aria-live="polite" aria-atomic="true">
+                                <div class="game-point-bursts" aria-hidden="true">
+                                    <template x-for="burst in pointBursts" :key="burst.id">
+                                        <span class="game-point-burst" :class="burst.delta > 0 ? 'text-green-300' : 'text-orange-300'"
+                                              x-text="(burst.delta > 0 ? '+' : '') + burst.delta"></span>
+                                    </template>
+                                </div>
+                                <span class="sr-only" x-text="'Jouw punten: ' + score"></span>
                                 <template x-for="(d, di) in scoreDigits" :key="'sd'+di">
-                                    <div class="digit-7seg">
+                                    <div class="digit-7seg" aria-hidden="true">
                                         <template x-for="seg in SEG_LIST" :key="seg">
                                             <div class="seg" :class="'seg-'+seg+' '+(segOn(d,seg)?'':'off')"></div>
                                         </template>
                                     </div>
                                 </template>
                             </div>
-                            <p class="text-xs font-bold" x-show="scoreChange !== null && scoreChange !== 0"
-                               :class="scoreChange > 0 ? 'text-green-300' : 'text-orange-300'"
-                               x-text="(scoreChange > 0 ? '+' : '') + scoreChange + ' punten'"></p>
-                            <p class="text-[10px] text-gray-300"><span x-text="spinCost"></span> punten per spin · Goed antwoord: +10 tot +50</p>
-                        </div>
-                    </div>
 
-                    <!-- BLOK 3: LED KRANS + MESSAGEBOARD -->
-                    <!-- One 9x3 grid. Tile indexes run clockwise: top 0-8, right 9, bottom 10-18 (shown right->left), left 19. -->
-                    <div class="border-x-2 border-indigo-400 bg-[#141428] p-2">
-                        <div class="led-frame" :class="ledActive ? 'led-chasing' : ''">
-                            <div class="led-grid">
+                            <!-- One 9x3 grid. Tile indexes run clockwise: top 0-8, right 9, bottom 10-18 (shown right->left), left 19. -->
+                            <div class="led-grid" :class="ledActive ? 'led-chasing' : ''">
                                 <template x-for="i in [0,1,2,3,4,5,6,7,8]" :key="'ledtop'+i">
-                                    <div class="led-tile" :class="ledTileClass(i)">
+                                    <div class="led-tile" :class="ledTileClass(i)" :style="ledTileStyle(i)">
                                         <img :src="ledIconUrl(i)" class="led-tile-icon" alt="">
                                     </div>
                                 </template>
 
-                                <div class="led-tile" :class="ledTileClass(19)">
+                                <div class="led-tile" :class="ledTileClass(19)" :style="ledTileStyle(19)">
                                     <img :src="ledIconUrl(19)" class="led-tile-icon" alt="">
                                 </div>
                                 <div class="led-message" :class="message.length > 16 ? 'led-message--long' : ''">
                                     <span x-text="message"></span>
                                 </div>
-                                <div class="led-tile" :class="ledTileClass(9)">
+                                <div class="led-tile" :class="ledTileClass(9)" :style="ledTileStyle(9)">
                                     <img :src="ledIconUrl(9)" class="led-tile-icon" alt="">
                                 </div>
 
                                 <template x-for="i in [18,17,16,15,14,13,12,11,10]" :key="'ledbot'+i">
-                                    <div class="led-tile" :class="ledTileClass(i)">
+                                    <div class="led-tile" :class="ledTileClass(i)" :style="ledTileStyle(i)">
                                         <img :src="ledIconUrl(i)" class="led-tile-icon" alt="">
                                     </div>
                                 </template>

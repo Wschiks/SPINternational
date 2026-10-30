@@ -9,11 +9,10 @@ export function ledKransMixin(ledSegments) {
         // lit in the current frame (null when no show is playing).
         ledFlash: null,
 
-        // Tile background colour comes from the segment colour; the lit tile
-        // and the one it just left (trail) get extra classes so the light
-        // visibly travels around the krans.
+        // The lit tile and the one it just left (trail) get extra classes so
+        // the light visibly travels around the krans.
         ledTileClass(i) {
-            const classes = [`led-tile--${this.ledSegments[i]?.color ?? 'red'}`];
+            const classes = [];
             if (this.ledFlash) {
                 if (this.ledFlash.has(i)) classes.push(i === this.ledIndex ? 'led-tile--lit' : 'led-tile--flash');
             } else if (this.ledActive) {
@@ -22,6 +21,13 @@ export function ledKransMixin(ledSegments) {
                 else if ((this.ledIndex - 1 + len) % len === i) classes.push('led-tile--trail');
             }
             return classes.join(' ');
+        },
+
+        // Each tile shows its own square of the design's board image: ring
+        // index -> column and row of the 9x3 grid.
+        ledTileStyle(i) {
+            const [col, row] = i <= 8 ? [i, 0] : i === 9 ? [8, 1] : i <= 18 ? [18 - i, 2] : [0, 1];
+            return `background-position: ${(col / 8) * 100}% ${(row / 2) * 100}%`;
         },
 
         // `resumeQueue` is called once the player presses STOP, so any
