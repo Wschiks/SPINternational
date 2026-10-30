@@ -445,26 +445,39 @@
     animation: game-points-rise 1400ms ease-out both;
 }
 
-.game-confetti-layer {
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    overflow: hidden;
-    pointer-events: none;
-}
-
 .game-confetti-piece {
     position: absolute;
-    top: -20px;
-    width: 7px;
-    height: 13px;
-    border-radius: 2px;
-    background: var(--color);
-    animation: game-confetti-fall 1900ms var(--delay) ease-in both;
+    top: -30px;
+    width: var(--size, 10px);
+    height: calc(var(--size, 10px) * 1.8);
+    border-radius: var(--round, 2px);
+    background: var(--color, #fde047);
+    font-size: calc(var(--size, 10px) * 2);
+    line-height: 1;
+    animation: game-confetti-fall var(--fall, 2400ms) var(--delay, 0ms) ease-in both;
 }
 
-.game-answer-feedback {
-    animation: game-answer-reveal 300ms ease-out;
+.game-confetti-piece:not(:empty) {
+    width: auto;
+    height: auto;
+    background: none;
+}
+
+.game-confetti-piece.is-cannon {
+    top: auto;
+    bottom: -20px;
+    animation: game-confetti-cannon 2600ms var(--delay, 0ms) cubic-bezier(0.1, 0.7, 0.3, 1) both;
+}
+
+.game-flash {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgb(255 255 255 / 0.6) 0%, rgb(253 224 71 / 0.35) 40%, transparent 70%);
+    animation: game-flash 700ms ease-out both;
+}
+
+.game-celebrating {
+    animation: game-shake 500ms ease-in-out;
 }
 
 @keyframes game-points-rise {
@@ -478,7 +491,28 @@
     0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg); }
     10% { opacity: 1; }
     80% { opacity: 1; }
-    100% { opacity: 0; transform: translate3d(var(--drift), 100vh, 0) rotate(var(--turn)); }
+    100% { opacity: 0; transform: translate3d(var(--drift, 0px), 175cqw, 0) rotate(var(--turn, 360deg)); }
+}
+
+@keyframes game-confetti-cannon {
+    0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg); }
+    8% { opacity: 1; }
+    55% { opacity: 1; transform: translate3d(var(--dx, 0cqw), var(--dy, -100cqw), 0) rotate(calc(var(--turn, 720deg) / 2)); }
+    100% { opacity: 0; transform: translate3d(calc(var(--dx, 0cqw) * 1.1), 60cqw, 0) rotate(var(--turn, 720deg)); }
+}
+
+@keyframes game-flash {
+    0% { opacity: 0; }
+    15% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes game-shake {
+    0%, 100% { translate: 0 0; }
+    20% { translate: -6px 3px; }
+    40% { translate: 5px -3px; }
+    60% { translate: -4px 2px; }
+    80% { translate: 3px -1px; }
 }
 
 @keyframes game-match-reveal {
@@ -495,7 +529,12 @@
 @media (prefers-reduced-motion: reduce) {
     .game-point-bursts,
     .game-confetti-layer {
-        display: none;
+        position: absolute;
+        inset: 0;
+        z-index: 60;
+        overflow: hidden;
+        border-radius: inherit;
+        pointer-events: none;
     }
 
     .game-cabinet,

@@ -24,17 +24,33 @@
          x-data='gameApp(@json($categories), @json($themes), @json($ledKrans), @json($assetPaths), { spinCost: @json($spinCost) })'
          @dev-show-answers.window="devShowAnswers = $event.detail">
         <div class="game-confetti-layer" aria-hidden="true">
+            <template x-for="id in [flashId]" :key="id">
+                <div class="game-flash" x-show="celebration !== null"></div>
+            </template>
             <template x-for="piece in confetti" :key="piece.id">
-                <span class="game-confetti-piece" :style="piece.style"></span>
+        <span class="game-confetti-piece"
+              :class="{ 'is-cannon': piece.cannon }"
+              :style="piece.style"
+              x-text="piece.emoji"></span>
             </template>
         </div>
 
         <!-- The machine: one picture of 1006 x 1656 from the design (TOTAAL SPIN-1START). Everything on it is placed
              in the design's own pixels with style="--x;--y;--w;--h" (see .st in app.css), so it scales as one piece. -->
-        <div class="game-cabinet game-stage text-white spin-font"
-             style="--led-board: url('{{ asset('images/game/panels/led-board.png') }}');"
-             :class="{ 'game-spinning': spinning, 'game-celebrating': celebration !== null }">
+        <div class="game-cabinet game-stage text-white spin-font" ...>
             <img src="{{ asset('images/game/stage/base.png') }}" class="game-stage-base" alt="" draggable="false">
+
+            <div class="game-confetti-layer" aria-hidden="true">
+                <template x-for="id in [flashId]" :key="id">
+                    <div class="game-flash" x-show="celebration !== null"></div>
+                </template>
+                <template x-for="piece in confetti" :key="piece.id">
+            <span class="game-confetti-piece"
+                  :class="{ 'is-cannon': piece.cannon }"
+                  :style="piece.style"
+                  x-text="piece.emoji"></span>
+                </template>
+            </div>
 
             <template x-if="started">
                 <div>
