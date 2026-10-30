@@ -176,7 +176,7 @@ class GamePointsTest extends TestCase
     public function test_game_page_shows_the_point_rules(): void
     {
         $this->actingAs(User::factory()->create())->get('/game')
-            ->assertOk()->assertSee('Jouw punten')->assertSee('score-led')->assertDontSee('START SPEL');
+            ->assertOk()->assertSee('Jouw punten')->assertSee('game-stage')->assertDontSee('START SPEL');
     }
 
     #[TestWith([true, 1])]
@@ -186,7 +186,7 @@ class GamePointsTest extends TestCase
         $session = $this->startGameSession();
         $themeQuestion = ThemeQuestion::create([
             'theme_id' => 1, 'theme_name' => 'Duurzaamheid', 'question_type' => 'mc_1goed',
-            'question_text' => 'Groen?', 'difficulty' => 1,
+            'question_number' => 1, 'question_text' => 'Groen?', 'difficulty' => 1, 'points_base' => 10,
             'answer_options' => [['key' => 'a', 'text' => 'Ja'], ['key' => 'b', 'text' => 'Nee']],
             'correct_answer' => 'a', 'feedback_correct' => 'Goed', 'feedback_wrong' => 'Fout',
         ]);
@@ -195,26 +195,26 @@ class GamePointsTest extends TestCase
             'current_reel_result' => [7, 2, 3],
         ]);
         $grid = $session->badgeboardState->icon_states;
-        $grid[2] = [1 => 1, 2 => 1, 3 => null, 4 => 0, 5 => 1]; // only Nederland (category 7, col 4) missing
+        $grid[4] = [1 => 1, 2 => 1, 3 => null, 4 => 0, 5 => 1]; // only Nederland (category 7, row 4, col 4) missing
         $session->badgeboardState->update(['icon_states' => $grid]);
         $question = QuestionFactory::new()->create();
         $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertOk();
 
         $this->postJson("/game/{$session->id}/answer", ['question_id' => $question->id, 'answer' => 'a'])
             ->assertOk()
-            ->assertJsonPath('horizontal_bonus.row', 2)
+            ->assertJsonPath('horizontal_bonus.row', 4)
             ->assertJsonPath('horizontal_bonus.theme_id', 1)
             ->assertJsonPath('horizontal_bonus.slot', 1)
             ->assertJsonPath('horizontal_bonus.question.id', $themeQuestion->id)
-            ->assertJsonPath('state.badgeboard.icon_states.2', [1 => 1, 2 => 1, 3 => null, 4 => 1, 5 => 1]);
+            ->assertJsonPath('state.badgeboard.icon_states.4', [1 => 1, 2 => 1, 3 => null, 4 => 1, 5 => 1]);
 
         $this->postJson("/game/{$session->id}/theme-answer", ['question_id' => $themeQuestion->id, 'answer' => $answerRight ? 'a' : 'b'])
             ->assertOk()
             ->assertJsonPath('correct', $answerRight)
             ->assertJsonPath('state.themes.1.checks', $checks)
             ->assertJsonPath('state.themes.1.active', $answerRight)
-            ->assertJsonPath('state.badgeboard.icon_states.2', [1 => 0, 2 => 0, 3 => null, 4 => 0, 5 => 0])
-            ->assertJsonPath('state.badgeboard.horizontals.2', false);
+            ->assertJsonPath('state.badgeboard.icon_states.4', [1 => 0, 2 => 0, 3 => null, 4 => 0, 5 => 0])
+            ->assertJsonPath('state.badgeboard.horizontals.4', false);
     }
 
     private function startGameSession(int $level = 1): GameSession

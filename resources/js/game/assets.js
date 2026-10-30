@@ -26,12 +26,11 @@ export function assetsMixin(paths) {
             return seg ? paths.led[seg.color] : paths.led.red;
         },
 
-        // Badgeboard is a 4x5 grid; column 3 is reserved for theme icons.
+        // Same grid as GameCatalog::BADGEBOARD_GRID; column 3 is reserved for theme icons.
         categoryAt(row, col) {
-            const cols = [1, 2, 4, 5];
-            const idx = cols.indexOf(col);
+            const idx = [1, 2, 4, 5].indexOf(col);
             if (idx === -1) return null;
-            return (row - 1) * 4 + idx + 1;
+            return [[2, 6, 10, 13], [4, 5, 11, 15], [3, 8, 12, 16], [1, 9, 7, 14]][row - 1][idx];
         },
 
         badgeOn(row, col) {

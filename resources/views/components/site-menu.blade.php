@@ -1,7 +1,10 @@
+@props(['showButton' => true])
+
 <div class="fixed left-3 top-3 z-50 sm:left-5 sm:top-5"
      x-data="{ menuOpen: false }"
      @keydown.escape.window="menuOpen = false"
      @toggle-site-menu.window="menuOpen = !menuOpen">
+    @if ($showButton)
     <button type="button"
             x-ref="menuButton"
             @click="menuOpen = !menuOpen"
@@ -16,6 +19,7 @@
         </span>
         <span class="hidden text-xs font-black tracking-[0.2em] sm:inline">MENU</span>
     </button>
+    @endif
 
     <div x-show="menuOpen" x-cloak x-transition.opacity
          class="fixed inset-0 z-40 bg-[#050511]/80 backdrop-blur-sm"

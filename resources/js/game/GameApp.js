@@ -70,6 +70,19 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
             clearInterval(this.themeBlinkTimer);
         },
 
+        get boardMessage() {
+            return this.reels.every((reel) => reel.held) && !this.isWon
+                ? 'Alle rollen vast! Druk op SPIN'
+                : this.message;
+        },
+
+        // The numbers light up as in the design until a question has a value.
+        pointsLightClass(points) {
+            const current = Number(this.lastPointsLabel);
+            if (![50, 40, 30, 20, 10].includes(current)) return '';
+            return current === points ? 'is-lit' : 'is-dim';
+        },
+
         get scoreDigits() {
             return String(this.score).padStart(5, '0').split('').map(Number);
         },

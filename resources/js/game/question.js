@@ -23,7 +23,7 @@ export function questionMixin() {
             this.draft = ['mc_2goed', 'mc_3goed', 'volgorde', 'matching', 'sleep'].includes(q.type) ? [] : null;
         },
 
-        devShowAnswers: localStorage.getItem('devShowAnswers') === '1',
+        devShowAnswers: globalThis.localStorage?.getItem('devShowAnswers') === '1',
 
         devAnswer() {
             return this.devShowAnswers ? (this.question?.dev_answer ?? null) : null;
