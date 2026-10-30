@@ -19,7 +19,7 @@
         ];
     @endphp
 
-    <x-site-menu :show-button="false" />
+    <x-site-menu />
     <div class="game-page"
          x-data='gameApp(@json($categories), @json($themes), @json($ledKrans), @json($assetPaths), { spinCost: @json($spinCost) })'
          @dev-show-answers.window="devShowAnswers = $event.detail">
