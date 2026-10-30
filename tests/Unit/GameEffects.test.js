@@ -27,11 +27,11 @@ test('a new celebration replaces the old one and gets its full duration', (conte
     game.celebrate('win');
 
     assert.equal(game.celebration, 'win');
-    assert.equal(game.confetti.length, 40);
+    assert.equal(game.confetti.length, 350);
     assert.notEqual(game.confetti[0].id, firstId);
-    context.mock.timers.tick(1200);
+    context.mock.timers.tick(3700);
     assert.equal(game.celebration, 'win');
-    context.mock.timers.tick(1200);
+    context.mock.timers.tick(100);
     assert.equal(game.celebration, null);
     assert.deepEqual(game.confetti, []);
 });

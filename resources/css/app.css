@@ -44,56 +44,203 @@
 }
 
 /* ============ LED krans ============ */
-.led-frame {
-    border-radius: 0.9rem;
-    padding: 5px;
-    background: linear-gradient(180deg, #5b8cff 0%, #2f5fe0 45%, #1a3fb0 100%);
-    box-shadow:
-        0 0 0 2px #0c1f6b,
-        0 0 14px rgba(70, 120, 255, 0.75),
-        inset 0 2px 0 rgba(255, 255, 255, 0.45),
-        inset 0 -2px 0 rgba(0, 0, 40, 0.45);
+/* ============ the machine: one 1006 x 1656 picture from the design, scaled to fit the window ============ */
+.game-page {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
 }
 
-/* The tiles' aspect-ratio sets every row height; the message only fills
-   its cell (its text is absolutely positioned) so it can never stretch it. */
+.game-stage {
+    position: relative;
+    width: min(100vw, calc(100dvh * 1006 / 1656));
+    aspect-ratio: 1006 / 1656;
+    container-type: inline-size;
+    border-radius: 3.5%  / 2.1%;
+}
+
+.game-stage-base {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    user-select: none;
+}
+
+/* placed in the design's own pixels */
+.st {
+    position: absolute;
+    left: calc(var(--x) / 1006 * 100%);
+    top: calc(var(--y) / 1656 * 100%);
+    width: calc(var(--w) / 1006 * 100%);
+    height: calc(var(--h) / 1656 * 100%);
+    object-fit: contain;
+}
+
+.badge-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+}
+
+.badge-cell {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75cqw;
+}
+
+.badge-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* an icon you have not earned yet is dimmer; the design only shows the bright ones */
+.badge-off {
+    filter: brightness(0.5) saturate(0.7);
+}
+
+.badge-on {
+    filter: drop-shadow(0 0 0.6cqw #fde047);
+}
+
+.stage-light {
+    transition: filter 200ms ease;
+}
+
+.stage-light.is-dim {
+    filter: brightness(0.38) saturate(0.6);
+}
+
+.stage-light.is-lit {
+    filter: drop-shadow(0 0 0.8cqw #fde047);
+}
+
+.score-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #09090c;
+}
+
+.score-display .digit-7seg {
+    width: 2.98cqw;
+    margin: 0 0.15cqw;
+}
+
+.stage-note {
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1cqw;
+    padding: 1.5cqw;
+    text-align: center;
+    font-size: 1.9cqw;
+    line-height: 1.5;
+    background: rgba(67, 20, 7, 0.95);
+    border: 0.2cqw solid #fb923c;
+    border-radius: 1cqw;
+}
+
+.stage-note-btn {
+    padding: 0.8cqw 2cqw;
+    font-weight: 700;
+    background: #ea580c;
+    border-radius: 0.6cqw;
+}
+
+/* ============ buttons from the design ============ */
+.game-btn {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.game-btn:disabled {
+    cursor: default;
+}
+
+.game-btn:focus-visible {
+    outline: 0.3cqw solid #fff;
+    outline-offset: 0.2cqw;
+}
+
+.game-btn-face,
+.game-btn-rim {
+    position: absolute;
+    inset: 0;
+    background: var(--img) center / 100% 100% no-repeat;
+}
+
+.game-btn:disabled .game-btn-face,
+.game-btn:disabled .game-btn-rim {
+    filter: brightness(0.68) saturate(0.8);
+}
+
+/* a flat button: the whole thing goes in */
+.game-btn-face {
+    transition: transform 130ms cubic-bezier(0.3, 1.6, 0.5, 1), filter 130ms ease;
+}
+
+.game-btn:not(:disabled):active .game-btn-face {
+    transform: translateY(5%) scale(0.95);
+    filter: brightness(0.8);
+    transition-duration: 40ms;
+}
+
+/* a 3D key: the top slides over its rim, which stays where it is */
+.game-btn--cap .game-btn-rim {
+    clip-path: inset(62% 0 0 0);
+}
+
+.game-btn--cap .game-btn-face {
+    clip-path: inset(0 0 13% 0);
+}
+
+.game-btn--cap:not(:disabled):active .game-btn-face,
+.game-btn--cap.is-held .game-btn-face {
+    transform: translateY(11%);
+    filter: brightness(0.82);
+}
+
+.game-btn.is-held {
+    filter: drop-shadow(0 0 0.9cqw #4ade80);
+}
+
 .led-grid {
     display: grid;
     grid-template-columns: repeat(9, minmax(0, 1fr));
-    gap: 3px;
-    padding: 4px;
-    border-radius: 0.55rem;
-    background: #1b2a5e;
-    box-shadow: inset 0 0 0 2px #0c1f6b, inset 0 3px 8px rgba(0, 0, 0, 0.6);
+    grid-template-rows: repeat(3, minmax(0, 1fr));
 }
 
+/* every tile shows its own square of the empty board (ledTileStyle) */
 .led-tile {
-    --tile: #a8323a;
-    aspect-ratio: 1;
     min-width: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 3px;
-    background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--tile) 78%, white), var(--tile) 70%);
-    box-shadow:
-        inset 0 0 0 1px rgba(255, 255, 255, 0.22),
-        inset 0 0 0 3px color-mix(in srgb, var(--tile) 70%, black);
+    background-image: var(--led-board);
+    background-size: 900% 300%;
     position: relative;
 }
 
 .led-tile-icon {
-    width: 72%;
+    width: 70%;
     height: 72%;
     object-fit: contain;
     filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45));
 }
-
-.led-tile--red { --tile: #a8323a; }
-.led-tile--blue { --tile: #2c63b8; }
-.led-tile--pink { --tile: #c0447c; }
-.led-tile--yellow { --tile: #b0922c; }
-.led-tile--green { --tile: #5a9a3a; }
 
 .led-chasing .led-tile {
     filter: brightness(0.6) saturate(0.9);
@@ -106,7 +253,7 @@
 /* Win show after STOP: lit tiles glow in their own colour. */
 .led-chasing .led-tile--flash {
     filter: brightness(1.35) saturate(1.3);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 0 9px 2px color-mix(in srgb, var(--tile) 55%, white);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 0 9px 2px rgba(255, 255, 255, 0.6);
     z-index: 5;
 }
 
@@ -122,9 +269,8 @@
     position: relative;
     min-width: 0;
     container-type: size;
-    border-radius: 3px;
-    background: linear-gradient(180deg, #4d78dc, #3f66cc);
-    box-shadow: inset 0 0 0 2px #2a4aa8, inset 0 2px 0 2px rgba(255, 255, 255, 0.18);
+    background: #4769c9;
+    box-shadow: inset 0 0 0 0.4cqw #131826;
     font-family: 'Fredoka', ui-rounded, 'SF Pro Rounded', 'Arial Rounded MT Bold', system-ui, sans-serif;
     font-weight: 700;
     text-transform: uppercase;
@@ -268,9 +414,19 @@
 
 /* ============ slot reel strip ============ */
 .reel-window {
-    position: relative;
     overflow: hidden;
     background: #fff;
+    container-type: size;
+}
+
+/* the blue fade at the top and bottom of the window, above the icons */
+.reel-window::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(180deg, #1f3f9c 0%, transparent 21%, transparent 79%, #1f3f9c 100%);
 }
 
 .reel-strip {
@@ -283,9 +439,16 @@
 
 .reel-item {
     width: 100%;
+    height: 76.47cqw;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.reel-item img {
+    width: 60%;
+    height: 66%;
+    object-fit: contain;
 }
 
 .reel-window.is-spinning .reel-item img {
@@ -312,9 +475,16 @@
     box-shadow: inset 0 14px 18px #312e8160, inset 0 -14px 18px #312e8160;
 }
 
+/* cqw here is a share of the reel window, not of the machine */
+.reel-window.reel-match::before {
+    box-shadow: inset 0 0 22cqw 6cqw #fde047;
+}
+
+.reel-window.is-held::before {
+    box-shadow: inset 0 0 22cqw 6cqw #22c55e;
+}
+
 .reel-window.reel-match {
-    border-color: #fde047;
-    box-shadow: 0 0 14px #fde04790;
     animation: game-match-reveal 450ms ease-out;
 }
 
@@ -334,26 +504,39 @@
     animation: game-points-rise 1400ms ease-out both;
 }
 
-.game-confetti-layer {
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    overflow: hidden;
-    pointer-events: none;
-}
-
 .game-confetti-piece {
     position: absolute;
-    top: -20px;
-    width: 7px;
-    height: 13px;
-    border-radius: 2px;
-    background: var(--color);
-    animation: game-confetti-fall 1900ms var(--delay) ease-in both;
+    top: -30px;
+    width: var(--size, 10px);
+    height: calc(var(--size, 10px) * 1.8);
+    border-radius: var(--round, 2px);
+    background: var(--color, #fde047);
+    font-size: calc(var(--size, 10px) * 2);
+    line-height: 1;
+    animation: game-confetti-fall var(--fall, 2400ms) var(--delay, 0ms) ease-in both;
 }
 
-.game-answer-feedback {
-    animation: game-answer-reveal 300ms ease-out;
+.game-confetti-piece:not(:empty) {
+    width: auto;
+    height: auto;
+    background: none;
+}
+
+.game-confetti-piece.is-cannon {
+    top: auto;
+    bottom: -20px;
+    animation: game-confetti-cannon 2600ms var(--delay, 0ms) cubic-bezier(0.1, 0.7, 0.3, 1) both;
+}
+
+.game-flash {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgb(255 255 255 / 0.6) 0%, rgb(253 224 71 / 0.35) 40%, transparent 70%);
+    animation: game-flash 700ms ease-out both;
+}
+
+.game-celebrating {
+    animation: game-shake 500ms ease-in-out;
 }
 
 @keyframes game-points-rise {
@@ -367,7 +550,28 @@
     0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg); }
     10% { opacity: 1; }
     80% { opacity: 1; }
-    100% { opacity: 0; transform: translate3d(var(--drift), 100vh, 0) rotate(var(--turn)); }
+    100% { opacity: 0; transform: translate3d(var(--drift, 0px), 175cqw, 0) rotate(var(--turn, 360deg)); }
+}
+
+@keyframes game-confetti-cannon {
+    0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg); }
+    8% { opacity: 1; }
+    55% { opacity: 1; transform: translate3d(var(--dx, 0cqw), var(--dy, -100cqw), 0) rotate(calc(var(--turn, 720deg) / 2)); }
+    100% { opacity: 0; transform: translate3d(calc(var(--dx, 0cqw) * 1.1), 60cqw, 0) rotate(var(--turn, 720deg)); }
+}
+
+@keyframes game-flash {
+    0% { opacity: 0; }
+    15% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes game-shake {
+    0%, 100% { translate: 0 0; }
+    20% { translate: -6px 3px; }
+    40% { translate: 5px -3px; }
+    60% { translate: -4px 2px; }
+    80% { translate: 3px -1px; }
 }
 
 @keyframes game-match-reveal {
@@ -384,7 +588,12 @@
 @media (prefers-reduced-motion: reduce) {
     .game-point-bursts,
     .game-confetti-layer {
-        display: none;
+        position: absolute;
+        inset: 0;
+        z-index: 60;
+        overflow: hidden;
+        border-radius: inherit;
+        pointer-events: none;
     }
 
     .game-cabinet,

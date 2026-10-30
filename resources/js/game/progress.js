@@ -78,19 +78,22 @@ export function progressMixin() {
             this.started = true;
             this.matchType = state.match_type ?? null;
 
-            const reelResults = Array.isArray(state.reels) ? state.reels : [null, null, null];
+            const reelResults = Array.isArray(state.reels) ? state.reels : null;
             const heldReels = new Set(state.held_reels ?? []);
             const usedReels = new Set(state.used_reels ?? []);
 
-            this.reels = reelResults.map((categoryId, index) => ({
-                items: [categoryId],
-                offset: 0,
-                transitionMs: 0,
-                spinning: false,
-                held: heldReels.has(index + 1),
-                used: usedReels.has(index + 1),
-            }));
-            this.hasReelResult = reelResults.some((categoryId) => categoryId !== null);
+            if (reelResults) {
+                this.reels = reelResults.map((categoryId, index) => ({
+                    items: [this.reels[index]?.items[0] ?? categoryId, categoryId, this.reels[index]?.items[2] ?? categoryId],
+                    offset: 1,
+                    transitionMs: 0,
+                    spinning: false,
+                    held: heldReels.has(index + 1),
+                    used: usedReels.has(index + 1),
+                }));
+            }
+
+            this.hasReelResult = reelResults !== null;
             this.heldReelIndex = state.current_reel_index ? state.current_reel_index - 1 : null;
 
             if (state.active_question) {

@@ -53,14 +53,9 @@ export function themeMixin(themes) {
             this.themeSpinId = null;
         },
 
+        // All four always shine, as in the design: the squares below show the progress.
         themeImgClasses(id) {
-            const active = this.themes[id]?.active;
-            const picked = this.themeSpinRow !== null && this.themeSpinId === id;
-            return [active || picked ? 'opacity-100' : 'opacity-30 grayscale', picked ? 'pulse-glow' : ''].join(' ');
-        },
-
-        themeImgStyle(id) {
-            return this.themes[id]?.active ? 'filter: drop-shadow(0 0 8px currentColor);' : '';
+            return this.themeSpinRow !== null && this.themeSpinId === id ? 'pulse-glow' : '';
         },
     };
 }

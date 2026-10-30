@@ -4,8 +4,8 @@ namespace App\Support;
 
 /**
  * Static metadata for the 16 reel categories and 4 Erasmus+ themes.
- * Badgeboard is a 4x5 grid; column 3 is reserved for theme icons, so the
- * 16 categories fill the remaining 4x4 cells in row-major order.
+ * Badgeboard is a 4x5 grid; column 3 is reserved for theme icons, and the
+ * 16 categories fill the remaining 4x4 cells as in BADGEBOARD_GRID.
  */
 class GameCatalog
 {
@@ -68,13 +68,24 @@ class GameCatalog
 
     public const BADGEBOARD_COLS = [1, 2, 4, 5];
 
+    /** Which category sits where on the board, per row, as in the design (TOTAAL SPIN-1START). */
+    public const BADGEBOARD_GRID = [
+        1 => [2, 6, 10, 13],
+        2 => [4, 5, 11, 15],
+        3 => [3, 8, 12, 16],
+        4 => [1, 9, 7, 14],
+    ];
+
     public static function badgeboardPosition(int $categoryId): array
     {
-        $index = $categoryId - 1; // 0-based
-        $row = intdiv($index, 4) + 1; // 1..4
-        $col = self::BADGEBOARD_COLS[$index % 4];
+        foreach (self::BADGEBOARD_GRID as $row => $categories) {
+            $index = array_search($categoryId, $categories, true);
+            if ($index !== false) {
+                return ['row' => $row, 'col' => self::BADGEBOARD_COLS[$index]];
+            }
+        }
 
-        return ['row' => $row, 'col' => $col];
+        throw new \InvalidArgumentException("Unknown category {$categoryId}.");
     }
 
     public static function categoryAt(int $row, int $col): ?int
@@ -84,7 +95,7 @@ class GameCatalog
             return null;
         }
 
-        return ($row - 1) * 4 + $colIndex + 1;
+        return self::BADGEBOARD_GRID[$row][$colIndex];
     }
 
     public static function themeColumn(int $themeId, string $suffix): string

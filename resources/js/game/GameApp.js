@@ -67,6 +67,16 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
         init() {
             this.initEffects();
             this.initTutorial();
+
+            const gameStart = this.savedProgress?.sessionId
+                ? this.resumeSavedGame()
+                : this.startGame();
+
+            Promise.resolve(gameStart).then(() => {
+                if (!this.started) {
+                    this.startGame();
+                }
+            });
         },
 
         destroy() {
@@ -74,6 +84,19 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
             this.destroyTutorial();
             clearInterval(this.ledTimer);
             clearInterval(this.themeBlinkTimer);
+        },
+
+        get boardMessage() {
+            return this.reels.every((reel) => reel.held) && !this.isWon
+                ? 'Alle rollen vast! Druk op SPIN'
+                : this.message;
+        },
+
+        // The numbers light up as in the design until a question has a value.
+        pointsLightClass(points) {
+            const current = Number(this.lastPointsLabel);
+            if (![50, 40, 30, 20, 10].includes(current)) return '';
+            return current === points ? 'is-lit' : 'is-dim';
         },
 
         get scoreDigits() {
