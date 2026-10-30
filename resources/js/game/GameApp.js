@@ -61,6 +61,7 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
 
         init() {
             this.initEffects();
+            this.startGame();
         },
 
         destroy() {

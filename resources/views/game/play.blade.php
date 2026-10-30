@@ -32,32 +32,6 @@
             <div class="game-cabinet relative rounded-[2rem] bg-black text-white p-3 shadow-[0_0_25px_rgba(99,102,241,0.5)] spin-font"
                  :class="{ 'game-spinning': spinning, 'game-celebrating': celebration !== null }">
 
-                <!-- START SCREEN -->
-                <template x-if="!started">
-                    <div class="flex flex-col items-center justify-center gap-6 py-16 text-center">
-                        <img src="{{ asset('images/game/logo.png') }}" alt="SPINternational" class="w-56 drop-shadow-[0_0_15px_rgba(255,0,110,0.6)]">
-                        <p class="text-[10px] text-gray-400 max-w-xs leading-relaxed">Educatieve fruitmachine — beantwoord vragen, activeer thema's, win het spel.</p>
-                        <div class="rounded-lg border border-cyan-400/40 bg-cyan-950 p-4 text-xs leading-relaxed">
-                            <p>Je begint met <strong>{{ $startingPoints }} punten</strong>.</p>
-                            <p>Elke spin kost <strong>{{ $spinCost }} punten</strong>.</p>
-                            <p class="text-green-300">Goed antwoord: +10 tot +50 punten.</p>
-                        </div>
-                        <div class="flex items-center gap-2 text-[10px]">
-                            <span>Level:</span>
-                            <template x-for="lvl in [1,2,3]" :key="lvl">
-                                <button type="button" @click="startLevel = lvl"
-                                        class="px-3 py-2 rounded border"
-                                        :class="startLevel === lvl ? 'bg-cyan-400 text-black border-cyan-400' : 'border-gray-600 text-gray-300'"
-                                        x-text="lvl"></button>
-                            </template>
-                        </div>
-                        <button type="button" @click="startGame()"
-                                class="px-8 py-3 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-xs neon-box">
-                            START SPEL
-                        </button>
-                    </div>
-                </template>
-
                 <template x-if="started">
                 <div>
                     <!-- BLOK 6: KROON -->

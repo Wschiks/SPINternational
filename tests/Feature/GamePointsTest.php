@@ -176,7 +176,7 @@ class GamePointsTest extends TestCase
     public function test_game_page_shows_the_point_rules(): void
     {
         $this->actingAs(User::factory()->create())->get('/game')
-            ->assertOk()->assertSee('100 punten')->assertSee('10 punten')->assertSee('JOUW PUNTEN');
+            ->assertOk()->assertSee('punten per spin')->assertSee('JOUW PUNTEN')->assertDontSee('START SPEL');
     }
 
     #[TestWith([true, 1])]
