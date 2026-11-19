@@ -91,7 +91,7 @@
                                       x-text="(burst.delta > 0 ? '+' : '') + burst.delta"></span>
                             </template>
                         </div>
-                        <span class="sr-only" x-text="'Jouw punten: ' + score"></span>
+                        <span class="sr-only" x-text="@js(__('Jouw punten:')) + ' ' + score"></span>
                         <template x-for="(d, di) in scoreDigits" :key="'sd'+di">
                             <div class="digit-7seg" aria-hidden="true">
                                 <template x-for="seg in SEG_LIST" :key="seg">
@@ -151,7 +151,7 @@
                     @endforeach
 
                     <!-- Buttons -->
-                    <x-game-button image="level" label="Level kiezen" :x="72" :y="1409" :w="114" :h="90" x-on:click="cycleLevel()" x-bind:disabled="!canChangeLevel()" />
+                    <x-game-button image="level" label="{{ __('Level kiezen') }}" :x="72" :y="1409" :w="114" :h="90" x-on:click="cycleLevel()" x-bind:disabled="!canChangeLevel()" />
                     <x-game-button image="stop" label="Stop" :x="821" :y="1409" :w="114" :h="90" x-on:click="pressStop()" x-bind:disabled="!stopEnabled()" />
                     <x-game-button image="reject" label="Reject" :x="365" :y="1454" :w="99" :h="63" x-on:click="reject()" x-bind:disabled="!hasQuestion || isThemeQuestion || !!feedback || submitting || questionActionPending" />
                     <x-game-button image="skip" label="Skip" :x="542" :y="1462" :w="98" :h="54" x-on:click="skip()" x-bind:disabled="!hasQuestion || isThemeQuestion || !!feedback || submitting || questionActionPending" />
@@ -164,9 +164,9 @@
                     @endforeach
                     <x-game-button data-tutorial-target="spin" image="spin" label="Spin" cap :x="782" :y="1499" :w="190" :h="127" x-on:click="spin()" x-bind:disabled="!canSpin()" />
 
-                    <div x-show="score < spinCost && !hasQuestion && !spinning && !isWon" x-cloak class="st stage-note" style="--x:225;--y:1190;--w:561;--h:182">
-                        <p>Te weinig punten voor een spin. Kies HOLD bij een vrije rol en beantwoord een vraag om punten te verdienen.</p>
-                        <button type="button" class="stage-note-btn" @click="location.reload()">Nieuw spel</button>
+                    <div x-show="score < spinCost && !hasQuestion && !spinning && !isWon" x-cloak class="st stage-note" style="--x:150;--y:900;--w:706;--h:500">
+                        <p class="stage-note-title">{{ __('Geen punten meer!') }}</p>
+                        <button type="button" class="stage-note-btn arcade-btn" @click="discardSavedProgress(); location.reload()">{{ __('Start nieuw spel') }}</button>
                     </div>
 
                     <!-- QUESTION MODAL -->
@@ -174,23 +174,23 @@
                         <section role="dialog" aria-modal="true" aria-labelledby="question-title"
                                  class="flex max-h-full w-full flex-col overflow-hidden rounded-xl border-2 border-fuchsia-600 bg-[#1a1a2e] text-xs shadow-[0_24px_80px_rgba(0,0,0,0.75),0_0_28px_rgba(192,38,211,0.22)]">
                             <div class="min-h-0 overflow-y-auto p-5">
-                                <div class="text-yellow-300 mb-2" x-show="isThemeQuestion">🎯 THEME QUESTION <span x-text="themeSlot"></span>/3</div>
+                                <div class="text-yellow-300 mb-2" x-show="isThemeQuestion">🎯 {{ __('THEMAVRAAG') }} <span x-text="themeSlot"></span>/3</div>
                                 <div class="text-cyan-300 mb-1" x-text="question?.category_name ?? question?.theme_name"></div>
                                 <div class="mb-3 flex flex-wrap justify-between gap-2 text-xs">
-                                    <span class="text-green-300" x-show="!feedback">Goed antwoord: <strong x-text="'+' + questionPoints + ' punten'"></strong></span>
-                                    <span class="text-cyan-200">Jouw punten: <strong x-text="score"></strong></span>
+                                    <span class="text-green-300" x-show="!feedback">{{ __('Goed antwoord:') }} <strong x-text="'+' + questionPoints + ' ' + @js(__('punten'))"></strong></span>
+                                    <span class="text-cyan-200">{{ __('Jouw punten:') }} <strong x-text="score"></strong></span>
                                 </div>
                                 <h2 id="question-title" class="mb-4 text-base font-black leading-relaxed text-white" x-text="question?.text"></h2>
 
                             <div x-show="question?.image_path" class="mb-3 h-32 bg-gray-800 border border-gray-600 rounded flex items-center justify-center text-[9px] text-gray-400">
-                                [afbeelding]
+                                {{ __('[afbeelding]') }}
                             </div>
 
                             <template x-if="feedback">
                                 <div class="game-answer-feedback mb-3 p-2 rounded" :class="feedback.correct ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'">
-                                    <div x-text="feedback.correct ? '✓ Correct!' : '✗ Helaas'"></div>
+                                    <div x-text="feedback.correct ? '✓ ' + @js(__('Correct!')) : '✗ ' + @js(__('Helaas'))"></div>
                                     <div class="mt-1 text-gray-200" x-text="feedback.text"></div>
-                                    <div class="mt-2 text-sm font-bold" x-text="feedback.correct ? '+' + feedback.points + ' punten verdiend!' : 'Geen punten erbij.'"></div>
+                                    <div class="mt-2 text-sm font-bold" x-text="feedback.correct ? '+' + feedback.points + ' ' + @js(__('punten verdiend!')) : @js(__('Geen punten erbij.'))"></div>
                                 </div>
                             </template>
 
@@ -219,7 +219,7 @@
                                                 <span x-text="opt.text"></span><span class="text-yellow-300" x-text="devMark(opt.key)"></span>
                                             </button>
                                         </template>
-                                        <button type="button" class="mt-1 px-3 py-2 rounded bg-fuchsia-600" @click="submit()">Bevestig</button>
+                                        <button type="button" class="mt-1 px-3 py-2 rounded bg-fuchsia-600" @click="submit()">{{ __('Bevestig') }}</button>
                                     </div>
                                 </template>
 
@@ -241,16 +241,16 @@
                                             </template>
                                         </div>
                                         <button type="button" class="mt-2 px-3 py-2 rounded bg-fuchsia-600 disabled:opacity-30"
-                                                :disabled="(draft||[]).length !== question.options.length" @click="submit()">Bevestig volgorde</button>
+                                                :disabled="(draft||[]).length !== question.options.length" @click="submit()">{{ __('Bevestig volgorde') }}</button>
                                     </div>
                                 </template>
 
                                 <template x-if="['matching','sleep'].includes(question?.type)">
                                     <div>
-                                        <p class="mb-3 text-[11px] leading-relaxed text-slate-300">Kies eerst een antwoord links en daarna de bijpassende optie rechts. Alle opties blijven zichtbaar.</p>
+                                        <p class="mb-3 text-[11px] leading-relaxed text-slate-300">{{ __('Kies eerst een antwoord links en daarna de bijpassende optie rechts. Alle opties blijven zichtbaar.') }}</p>
                                         <div class="grid grid-cols-2 gap-3">
-                                            <section class="rounded-xl border border-white/10 bg-black/20 p-3" aria-label="Antwoorden om te koppelen">
-                                                <p class="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-fuchsia-200">1 · Kies links</p>
+                                            <section class="rounded-xl border border-white/10 bg-black/20 p-3" aria-label="{{ __('Antwoorden om te koppelen') }}">
+                                                <p class="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-fuchsia-200">{{ __('1 · Kies links') }}</p>
                                                 <div class="grid gap-2">
                                                 <template x-for="opt in question.options.left" :key="'l'+opt.key">
                                                     <button type="button" class="min-h-11 rounded-lg border px-3 py-2 text-left text-[11px] leading-snug transition focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
@@ -262,8 +262,8 @@
                                                 </template>
                                                 </div>
                                             </section>
-                                            <section class="rounded-xl border border-white/10 bg-black/20 p-3" aria-label="Bijpassende antwoorden">
-                                                <p class="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">2 · Kies rechts</p>
+                                            <section class="rounded-xl border border-white/10 bg-black/20 p-3" aria-label="{{ __('Bijpassende antwoorden') }}">
+                                                <p class="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">{{ __('2 · Kies rechts') }}</p>
                                                 <div class="grid gap-2">
                                                 <template x-for="opt in question.options.right" :key="'r'+opt.key">
                                                     <button type="button" class="min-h-11 rounded-lg border px-3 py-2 text-left text-[11px] leading-snug transition focus:outline-none focus:ring-2 focus:ring-cyan-300"
@@ -277,9 +277,9 @@
                                             </section>
                                         </div>
                                         <div class="mt-3 flex items-center justify-between gap-3 rounded-lg bg-white/5 p-3">
-                                            <div class="text-[10px] text-slate-300">Gekoppeld: <strong class="text-white" x-text="(draft||[]).length"></strong> / <span x-text="question.options.left.length"></span></div>
+                                            <div class="text-[10px] text-slate-300">{{ __('Gekoppeld:') }} <strong class="text-white" x-text="(draft||[]).length"></strong> / <span x-text="question.options.left.length"></span></div>
                                             <button type="button" class="min-h-11 rounded-lg bg-fuchsia-600 px-4 py-2 font-black text-white transition hover:bg-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-300 disabled:cursor-not-allowed disabled:opacity-30"
-                                                    :disabled="(draft||[]).length !== question.options.left.length || submitting" @click="submit()">Bevestig koppelingen</button>
+                                                    :disabled="(draft||[]).length !== question.options.left.length || submitting" @click="submit()">{{ __('Bevestig koppelingen') }}</button>
                                         </div>
                                     </div>
                                 </template>
@@ -301,7 +301,7 @@
                                 <template x-if="question?.type === 'hotspot'">
                                     <div class="relative h-40 bg-gray-800 border border-gray-600 rounded cursor-crosshair"
                                          @click="clickHotspot($event)">
-                                        <div class="absolute inset-0 flex items-center justify-center text-[9px] text-gray-500">klik in de afbeelding</div>
+                                        <div class="absolute inset-0 flex items-center justify-center text-[9px] text-gray-500">{{ __('klik in de afbeelding') }}</div>
                                         <div x-show="devHotspotPolygon()" class="absolute inset-0 bg-yellow-300/50 pointer-events-none" :style="'clip-path:' + devHotspotPolygon()"></div>
                                     </div>
                                 </template>
@@ -310,14 +310,14 @@
                             </div>
 
                             <div x-show="!feedback && !isThemeQuestion" class="flex items-center gap-2 border-t border-white/10 bg-black/20 px-5 py-3">
-                                <p class="mr-auto text-[10px] leading-relaxed text-slate-400">Wil je deze vraag niet beantwoorden?</p>
+                                <p class="mr-auto text-[10px] leading-relaxed text-slate-400">{{ __('Wil je deze vraag niet beantwoorden?') }}</p>
                                 <button type="button" class="arcade-btn min-h-11 rounded-lg bg-orange-600 px-4 py-2 text-[10px] font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
                                         @click="reject()" :disabled="submitting || questionActionPending">
-                                    REJECT <span class="block text-[9px] font-medium text-orange-100">-10 punten</span>
+                                    REJECT <span class="block text-[9px] font-medium text-orange-100">{{ __('-10 punten') }}</span>
                                 </button>
                                 <button type="button" class="arcade-btn min-h-11 rounded-lg bg-sky-600 px-4 py-2 text-[10px] font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
                                         @click="skip()" :disabled="submitting || questionActionPending">
-                                    SKIP <span class="block text-[9px] font-medium text-sky-100">-20 punten</span>
+                                    SKIP <span class="block text-[9px] font-medium text-sky-100">{{ __('-20 punten') }}</span>
                                 </button>
                             </div>
                         </section>
@@ -330,15 +330,15 @@
                                  :style="tutorialPosition">
                             <div class="mb-3 flex items-start justify-between gap-4">
                                 <div>
-                                    <p class="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300" x-text="`Stap ${tutorialIndex + 1} van ${tutorialSteps.length}`"></p>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300" x-text="@js(__('Stap')) + ' ' + (tutorialIndex + 1) + ' ' + @js(__('van')) + ' ' + tutorialSteps.length"></p>
                                     <h2 id="tutorial-title" class="mt-1 text-base font-black" x-text="tutorialStep.title"></h2>
                                 </div>
-                                <button type="button" class="rounded p-1 text-slate-300 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-300" @click="finishTutorial()" aria-label="Rondleiding sluiten">X</button>
+                                <button type="button" class="rounded p-1 text-slate-300 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-300" @click="finishTutorial()" aria-label="{{ __('Rondleiding sluiten') }}">X</button>
                             </div>
                             <p class="text-sm leading-relaxed text-slate-200" x-text="tutorialStep.text"></p>
                             <div class="mt-4 flex items-center justify-between gap-3">
-                                <button type="button" class="rounded-lg px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:invisible" :disabled="tutorialIndex === 0" @click="previousTutorialStep()">Vorige</button>
-                                <button type="button" class="rounded-lg bg-fuchsia-600 px-4 py-2 text-xs font-black text-white hover:bg-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-300" @click="nextTutorialStep()" x-text="tutorialIndex === tutorialSteps.length - 1 ? 'Klaar' : 'Volgende'"></button>
+                                <button type="button" class="rounded-lg px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:invisible" :disabled="tutorialIndex === 0" @click="previousTutorialStep()">{{ __('Vorige') }}</button>
+                                <button type="button" class="rounded-lg bg-fuchsia-600 px-4 py-2 text-xs font-black text-white hover:bg-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-300" @click="nextTutorialStep()" x-text="tutorialIndex === tutorialSteps.length - 1 ? @js(__('Klaar')) : @js(__('Volgende'))"></button>
                             </div>
                         </section>
                     </div>
@@ -346,9 +346,9 @@
                     <!-- WIN MODAL -->
                     <div x-show="isWon" x-cloak class="absolute inset-0 z-40 flex items-center justify-center bg-black/90 p-4">
                         <div class="border-4 border-yellow-400 rounded-2xl p-8 text-center max-w-sm neon-box text-yellow-300">
-                            <div class="text-3xl mb-2">🏆 YOU WON! 🏆</div>
-                            <div class="mb-4">Final score: <span x-text="score"></span></div>
-                            <button type="button" class="px-4 py-2 rounded bg-fuchsia-600 text-white" @click="location.reload()">Speel opnieuw</button>
+                            <div class="text-3xl mb-2">🏆 {{ __('YOU WON!') }} 🏆</div>
+                            <div class="mb-4">{{ __('Final score:') }} <span x-text="score"></span></div>
+                            <button type="button" class="px-4 py-2 rounded bg-fuchsia-600 text-white" @click="location.reload()">{{ __('Speel opnieuw') }}</button>
                         </div>
                     </div>
                 </div>

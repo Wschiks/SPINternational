@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 const SETTINGS = {
     animationsEnabled: { key: 'spin.settings.animations', defaultValue: true },
     buttonHintsEnabled: { key: 'spin.settings.buttonHints', defaultValue: true },
@@ -113,16 +114,16 @@ export function createSiteMenu() {
 
         historyLabel(eventType) {
             return {
-                starting_points: 'Startpunten',
+                starting_points: t('Startpunten'),
                 spin_cost: 'Spin',
-                question_correct: 'Goed antwoord',
-                penalty_skip: 'Vraag overgeslagen',
-                penalty_reject: 'Vraag afgewezen',
-                led_bonus: 'LED-bonus',
-                theme_correct: 'Themavraag goed',
-                theme_completion_bonus: 'Thema voltooid',
-                vertical_bonus: 'Verticale bonus',
-            }[eventType] ?? 'Score aangepast';
+                question_correct: t('Goed antwoord'),
+                penalty_skip: t('Vraag overgeslagen'),
+                penalty_reject: t('Vraag afgewezen'),
+                led_bonus: t('LED-bonus'),
+                theme_correct: t('Themavraag goed'),
+                theme_completion_bonus: t('Thema voltooid'),
+                vertical_bonus: t('Verticale bonus'),
+            }[eventType] ?? t('Score aangepast');
         },
 
         formatEventTime(timestamp) {
@@ -132,7 +133,7 @@ export function createSiteMenu() {
                 return '';
             }
 
-            return new Intl.DateTimeFormat('nl-NL', {
+            return new Intl.DateTimeFormat(globalThis.document?.documentElement.lang === 'en' ? 'en-GB' : 'nl-NL', {
                 hour: '2-digit',
                 minute: '2-digit',
             }).format(date);

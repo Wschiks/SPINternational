@@ -8,6 +8,7 @@ import { questionMixin } from './question';
 import { effectsMixin } from './effects';
 import { tutorialMixin } from './tutorial';
 import { progressMixin } from './progress';
+import { t } from '../i18n.js';
 
 const MESSAGES = {
     gameplay: ['Give it a spin', 'Nice try', 'Keep on going', 'Well done', 'Congratulations'],
@@ -45,7 +46,7 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
         scoreChange: null,
         scoreHistory: [],
         lastPointsLabel: '0',
-        message: 'Give it a spin',
+        message: t('Give it a spin'),
         isWon: false,
 
         badge: { icon_states: {}, verticals: {}, horizontals: {} },
@@ -88,7 +89,7 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
 
         get boardMessage() {
             return this.reels.every((reel) => reel.held) && !this.isWon
-                ? 'Alle rollen vast! Druk op SPIN'
+                ? t('Alle rollen vast! Druk op SPIN')
                 : this.message;
         },
 
@@ -136,13 +137,13 @@ export function createGameApp(categories, themes, ledKrans, assetPaths, pointRul
             const state = await this.api('POST', '/game/start', { level: this.startLevel });
             this.applyState(state);
             this.started = true;
-            this.message = `Je start met ${this.score} punten. Kies SPIN!`;
+            this.message = t('Je start met :score punten. Kies SPIN!', { score: this.score });
             this.$nextTick(() => this.maybeStartTutorial());
         },
 
         say(category) {
             const lines = MESSAGES[category] ?? ['...'];
-            this.message = lines[Math.floor(Math.random() * lines.length)];
+            this.message = t(lines[Math.floor(Math.random() * lines.length)]);
         },
 
         canChangeLevel() {

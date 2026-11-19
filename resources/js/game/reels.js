@@ -1,3 +1,4 @@
+import { t } from '../i18n.js';
 // The 3 reels: spinning animation, hold/unhold, and match-based points.
 export function reelsMixin() {
     return {
@@ -32,21 +33,20 @@ export function reelsMixin() {
             try {
                 data = await this.api('POST', `/game/${this.sessionId}/spin`, {});
                 this.applyState(data);
-                this.message = `Spin: -${this.spinCost} punten`;
+                this.message = t('Spin: -:cost punten', { cost: this.spinCost });
             } catch (error) {
                 this.spinning = false;
-                this.message = error.message || 'Spinnen is niet gelukt. Probeer opnieuw.';
+                this.message = error.message || t('Spinnen is niet gelukt. Probeer opnieuw.');
                 return;
             }
             const durations = this.reducedMotion ? [0, 0, 0] : [1300, 1650, 2000];
 
-            // All 3 reels held: the server released them, so all of them spin.
-            if (this.reels.every((reel) => reel.held)) {
-                this.reels.forEach((reel) => { reel.held = false; });
-            }
-
-            // A new spin makes every reel holdable again.
-            this.reels.forEach((reel) => { reel.used = false; });
+            // The server releases every reel when a new round starts, so those spin too.
+            const heldReels = new Set(data.held_reels ?? []);
+            this.reels.forEach((reel, i) => {
+                reel.held = heldReels.has(i + 1);
+                reel.used = false;
+            });
 
             const randomIcon = () => 1 + Math.floor(Math.random() * 16);
             const landed = data.reels.map((finalId) => [randomIcon(), finalId, randomIcon()]);
@@ -84,7 +84,13 @@ export function reelsMixin() {
                 this.hasReelResult = true;
                 this.matchType = data.match_type;
                 this.lastPointsLabel = String(this.previewPoints(data.reels));
-                this.message = 'Kies HOLD en verdien punten met een goed antwoord!';
+                if (new Set(data.reels).size === 1) {
+                    this.message = t('Drie dezelfde! Zet ze vast met HOLD.');
+                } else if (data.round_spins >= 2) {
+                    this.message = t('Geen drie dezelfde. Spin voor een nieuwe ronde.');
+                } else {
+                    this.message = t('Zet rollen vast met HOLD en spin nog een keer.');
+                }
             }, Math.max(...durations) + 80);
         },
 
@@ -94,13 +100,9 @@ export function reelsMixin() {
             return `transform:translateY(calc(45.88cqw - ${reel.offset} * 76.47cqw));transition:${transition};`;
         },
 
+        // Only 3 of the same symbol win a question, worth 50.
         previewPoints(finalReels) {
-            const counts = {};
-            finalReels.forEach((c) => (counts[c] = (counts[c] || 0) + 1));
-            const max = Math.max(...Object.values(counts));
-            if (max >= 3) return 50;
-            if (max === 2) return 40;
-            return this.level * 10;
+            return new Set(finalReels).size === 1 ? 50 : 0;
         },
 
         async hold(i) {
@@ -108,8 +110,13 @@ export function reelsMixin() {
             try {
                 const data = await this.api('POST', `/game/${this.sessionId}/hold`, { reel: i + 1 });
                 this.applyState(data.state);
-                this.heldReelIndex = i;
-                this.openQuestion(data.question, false, null, data.points);
+                this.reels[i].held = true;
+
+                // The question only comes once all 3 reels are held on the same symbol.
+                if (data.question) {
+                    this.heldReelIndex = i;
+                    this.openQuestion(data.question, false, null, data.points);
+                }
             } catch (e) {}
         },
 

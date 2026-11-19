@@ -94,18 +94,33 @@ class GamePointsTest extends TestCase
         $this->assertDatabaseMissing('score_events', ['event_type' => 'spin_cost']);
     }
 
-    public function test_reel_cannot_be_held_again_after_a_wrong_answer_until_the_next_spin(): void
+    public function test_holding_reels_without_three_of_a_kind_gives_no_question(): void
     {
         $session = $this->startGameSession();
-        QuestionFactory::new()->count(2)->create();
-        $session->update(['current_reel_result' => [7, 2, 3]]);
-        $questionId = $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertOk()->json('question.id');
-        $this->postJson("/game/{$session->id}/answer", ['question_id' => $questionId, 'answer' => 'b'])
-            ->assertOk()->assertJsonPath('correct', false)->assertJsonPath('state.used_reels', [1]);
+        QuestionFactory::new()->create();
+        $session->update(['current_reel_result' => [7, 7, 3]]);
 
-        $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertUnprocessable();
+        $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertOk()->assertJsonPath('question', null);
+        $this->postJson("/game/{$session->id}/hold", ['reel' => 2])->assertOk()->assertJsonPath('question', null);
+        $this->postJson("/game/{$session->id}/hold", ['reel' => 3])->assertOk()
+            ->assertJsonPath('question', null)
+            ->assertJsonPath('state.held_reels', [1, 2, 3])
+            ->assertJsonPath('state.active_question', null);
+    }
 
-        $this->postJson("/game/{$session->id}/spin")->assertOk()->assertJsonPath('used_reels', []);
+    public function test_the_spin_after_the_second_spin_of_a_round_releases_every_reel(): void
+    {
+        $session = $this->startGameSession();
+
+        $this->postJson("/game/{$session->id}/spin")->assertOk()->assertJsonPath('round_spins', 1);
+        $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertOk();
+        $this->postJson("/game/{$session->id}/spin")->assertOk()
+            ->assertJsonPath('round_spins', 2)
+            ->assertJsonPath('held_reels', [1]);
+
+        $this->postJson("/game/{$session->id}/spin")->assertOk()
+            ->assertJsonPath('round_spins', 1)
+            ->assertJsonPath('held_reels', []);
     }
 
     public function test_spin_with_all_reels_held_releases_them(): void
@@ -129,17 +144,16 @@ class GamePointsTest extends TestCase
         $this->assertDatabaseMissing('score_events', ['event_type' => 'spin_cost']);
     }
 
-    #[TestWith([1, [7, 2, 3], 10])]
-    #[TestWith([2, [7, 2, 3], 20])]
-    #[TestWith([3, [7, 2, 3], 30])]
-    #[TestWith([1, [7, 7, 3], 40])]
-    #[TestWith([1, [7, 7, 7], 50])]
-    public function test_correct_answer_adds_the_shown_reward_once_even_with_zero_balance(int $level, array $reels, int $reward): void
+    #[TestWith([1])]
+    #[TestWith([2])]
+    #[TestWith([3])]
+    public function test_correct_answer_adds_the_shown_reward_once_even_with_zero_balance(int $level): void
     {
+        $reward = 50;
         $session = $this->startGameSession($level);
         $question = QuestionFactory::new()->create(['difficulty' => $level]);
-        $session->update(['current_score' => 0, 'current_reel_result' => $reels]);
-        $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertOk()->assertJsonPath('points', $reward);
+        $session->update(['current_score' => 0, 'current_reel_result' => [7, 7, 7], 'held_reels' => [1, 2]]);
+        $this->postJson("/game/{$session->id}/hold", ['reel' => 3])->assertOk()->assertJsonPath('points', $reward);
 
         $this->postJson("/game/{$session->id}/answer", ['question_id' => $question->id, 'answer' => 'a'])
             ->assertOk()->assertJsonPath('correct', true)->assertJsonPath('points_awarded', $reward)
@@ -163,8 +177,8 @@ class GamePointsTest extends TestCase
     {
         $session = $this->startGameSession();
         $question = QuestionFactory::new()->create();
-        $session->update(['current_reel_result' => [7, 2, 3]]);
-        $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertOk();
+        $session->update(['current_reel_result' => [7, 7, 7], 'held_reels' => [1, 2]]);
+        $this->postJson("/game/{$session->id}/hold", ['reel' => 3])->assertOk();
 
         $this->postJson("/game/{$session->id}/answer", ['question_id' => $question->id, 'answer' => 'b'])
             ->assertOk()->assertJsonPath('correct', false)->assertJsonPath('points_awarded', 0)
@@ -178,16 +192,16 @@ class GamePointsTest extends TestCase
     {
         $session = $this->startGameSession();
         $question = QuestionFactory::new()->create();
-        $session->update(['current_reel_result' => [7, 2, 3]]);
-        $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertOk();
+        $session->update(['current_reel_result' => [7, 7, 7], 'held_reels' => [1, 2]]);
+        $this->postJson("/game/{$session->id}/hold", ['reel' => 3])->assertOk();
 
         $response = $this->getJson("/game/{$session->id}/state");
 
         $response->assertOk()
-            ->assertJsonPath('current_reel_index', 1)
+            ->assertJsonPath('current_reel_index', 3)
             ->assertJsonPath('active_question.kind', 'regular')
             ->assertJsonPath('active_question.question.id', $question->id)
-            ->assertJsonPath('active_question.points', 10)
+            ->assertJsonPath('active_question.points', 50)
             ->assertJsonPath('active_question.slot', null);
     }
 
@@ -195,8 +209,8 @@ class GamePointsTest extends TestCase
     {
         $session = $this->startGameSession();
         QuestionFactory::new()->count(2)->create();
-        $session->update(['current_reel_result' => [7, 2, 3]]);
-        $questionId = $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertOk()->json('question.id');
+        $session->update(['current_reel_result' => [7, 7, 7], 'held_reels' => [1, 2]]);
+        $questionId = $this->postJson("/game/{$session->id}/hold", ['reel' => 3])->assertOk()->json('question.id');
 
         $response = $this->postJson("/game/{$session->id}/skip");
 
@@ -218,8 +232,8 @@ class GamePointsTest extends TestCase
     {
         $session = $this->startGameSession();
         QuestionFactory::new()->create();
-        $session->update(['current_reel_result' => [7, 2, 3]]);
-        $questionId = $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertOk()->json('question.id');
+        $session->update(['current_reel_result' => [7, 7, 7], 'held_reels' => [1, 2]]);
+        $questionId = $this->postJson("/game/{$session->id}/hold", ['reel' => 3])->assertOk()->json('question.id');
 
         $response = $this->postJson("/game/{$session->id}/reject");
 
@@ -281,13 +295,14 @@ class GamePointsTest extends TestCase
         ]);
         $session->update([
             'theme_ict_checks' => 3, 'theme_inclusie_checks' => 3, 'theme_wereldburger_checks' => 3,
-            'current_reel_result' => [7, 2, 3],
+            'current_reel_result' => [7, 7, 7],
+            'held_reels' => [1, 2],
         ]);
         $grid = $session->badgeboardState->icon_states;
         $grid[4] = [1 => 1, 2 => 1, 3 => null, 4 => 0, 5 => 1]; // only Nederland (category 7, row 4, col 4) missing
         $session->badgeboardState->update(['icon_states' => $grid]);
         $question = QuestionFactory::new()->create();
-        $this->postJson("/game/{$session->id}/hold", ['reel' => 1])->assertOk();
+        $this->postJson("/game/{$session->id}/hold", ['reel' => 3])->assertOk();
 
         $this->postJson("/game/{$session->id}/answer", ['question_id' => $question->id, 'answer' => 'a'])
             ->assertOk()

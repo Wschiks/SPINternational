@@ -1,28 +1,29 @@
+import { t } from '../i18n.js';
 const GAMEPLAY_STEPS = [
     {
         target: 'menu',
-        title: 'Jouw spelmenu',
-        text: 'Open hier op elk moment de spelregels, scorehistorie en instellingen.',
+        title: t('Jouw spelmenu'),
+        text: t('Open hier op elk moment de spelregels, scorehistorie en instellingen.'),
     },
     {
         target: 'score',
-        title: 'Let op je punten',
-        text: 'Een spin kost punten. Goede antwoorden en bonussen vullen je score weer aan.',
+        title: t('Let op je punten'),
+        text: t('Een spin kost punten. Goede antwoorden en bonussen vullen je score weer aan.'),
     },
     {
         target: 'reels',
-        title: 'Draai de rollen',
-        text: 'De drie rollen bepalen welke categorie en hoeveel punten je kunt verdienen.',
+        title: t('Draai de rollen'),
+        text: t('De drie rollen bepalen welke categorie en hoeveel punten je kunt verdienen.'),
     },
     {
         target: 'hold',
-        title: 'Houd een rol vast',
-        text: 'Kies HOLD om een symbool te bewaren en beantwoord de bijbehorende vraag.',
+        title: t('Houd een rol vast'),
+        text: t('Zet rollen vast met HOLD. Staan er drie dezelfde vast? Dan krijg je een vraag.'),
     },
     {
         target: 'spin',
-        title: 'Klaar om te spinnen',
-        text: 'Druk op SPIN wanneer er minstens één rol vrij is en je genoeg punten hebt.',
+        title: t('Klaar om te spinnen'),
+        text: t('Druk op SPIN wanneer er minstens één rol vrij is en je genoeg punten hebt.'),
     },
 ];
 
@@ -54,7 +55,7 @@ export function tutorialMixin() {
 
         startTutorial() {
             if (!this.started) {
-                this.message = 'Start eerst het spel; open daarna MENU om de rondleiding te beginnen.';
+                this.message = t('Start eerst het spel; open daarna MENU om de rondleiding te beginnen.');
 
                 return;
             }

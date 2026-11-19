@@ -1,3 +1,4 @@
+import { t } from '../i18n.js';
 // The question modal: opening it, building the answer draft for every
 // question type, submitting it, and the follow-up effects (LED bonus,
 // theme unlock, win) that a correct/wrong answer can trigger.
@@ -131,7 +132,7 @@ export function questionMixin() {
             try {
                 data = await this.api('POST', path, { question_id: this.question.id, answer: this.draft });
             } catch (error) {
-                this.message = error.message || 'Antwoord versturen is niet gelukt. Probeer opnieuw.';
+                this.message = error.message || t('Antwoord versturen is niet gelukt. Probeer opnieuw.');
                 return;
             } finally {
                 this.submitting = false;
@@ -143,7 +144,7 @@ export function questionMixin() {
                 this.lastPointsLabel = String(data.points_awarded);
                 this.celebrate(data.game_won ? 'win' : 'correct');
             }
-            this.message = data.correct ? `Goed antwoord! +${data.points_awarded} punten` : 'Helaas, geen punten erbij.';
+            this.message = data.correct ? t('Goed antwoord! +:points punten', { points: data.points_awarded }) : t('Helaas, geen punten erbij.');
 
             setTimeout(() => this.closeQuestionAndFollowUp(data), 5000);
         },
@@ -160,9 +161,9 @@ export function questionMixin() {
                 this.applyState(data.state);
                 this.openQuestion(data.question, false, null, data.points);
                 this.lastPointsLabel = '-20';
-                this.message = 'Vraag overgeslagen: -20 punten';
+                this.message = t('Vraag overgeslagen: -20 punten');
             } catch (error) {
-                this.message = error.message || 'De vraag overslaan is niet gelukt.';
+                this.message = error.message || t('De vraag overslaan is niet gelukt.');
             } finally {
                 this.questionActionPending = false;
             }
@@ -184,9 +185,9 @@ export function questionMixin() {
                 this.pairPending = null;
                 this.heldReelIndex = null;
                 this.lastPointsLabel = '-10';
-                this.message = 'Vraag afgewezen: -10 punten';
+                this.message = t('Vraag afgewezen: -10 punten');
             } catch (error) {
-                this.message = error.message || 'De vraag afwijzen is niet gelukt.';
+                this.message = error.message || t('De vraag afwijzen is niet gelukt.');
             } finally {
                 this.questionActionPending = false;
             }

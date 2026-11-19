@@ -59,7 +59,7 @@ class GameEngine
         $this->assertActive($session);
 
         if ($session->current_question_id || $session->current_theme_question_id) {
-            throw new RuntimeException('Cannot change level while a question is active.');
+            throw new RuntimeException(__('Cannot change level while a question is active.'));
         }
 
         $session->update(['level_selected' => max(1, min(3, $level))]);
@@ -72,15 +72,15 @@ class GameEngine
         $this->assertActive($session);
 
         if ($session->current_question_id || $session->current_theme_question_id) {
-            throw new RuntimeException('Cannot spin while a question is active.');
+            throw new RuntimeException(__('Cannot spin while a question is active.'));
         }
 
         if ($session->led_krans_pending) {
-            throw new RuntimeException('Pak eerst je bonus met STOP.');
+            throw new RuntimeException(__('Pak eerst je bonus met STOP.'));
         }
 
         if ($session->current_score < GameCatalog::SPIN_COST) {
-            throw new RuntimeException('Niet genoeg punten. Een spin kost '.GameCatalog::SPIN_COST.' punten.');
+            throw new RuntimeException(__('Niet genoeg punten. Een spin kost :cost punten.', ['cost' => GameCatalog::SPIN_COST]));
         }
 
         $this->score->award($session, -GameCatalog::SPIN_COST, 'spin_cost', null);
@@ -93,7 +93,7 @@ class GameEngine
         $this->assertActive($session);
 
         if ($session->current_question_id) {
-            throw new RuntimeException('Cannot unhold while a question is active.');
+            throw new RuntimeException(__('Cannot unhold while a question is active.'));
         }
 
         return $this->reels->unhold($session, $reelNumber);
@@ -111,7 +111,7 @@ class GameEngine
         $this->assertActive($session);
 
         if ($session->current_question_id !== $questionId) {
-            throw new RuntimeException('That question is no longer active.');
+            throw new RuntimeException(__('That question is no longer active.'));
         }
 
         $question = Question::findOrFail($questionId);
@@ -175,7 +175,7 @@ class GameEngine
         $this->assertActive($session);
 
         if (! $session->current_question_id) {
-            throw new RuntimeException('No active question to skip.');
+            throw new RuntimeException(__('No active question to skip.'));
         }
 
         $this->questions->markUsed($session, $session->current_question_id);
@@ -197,7 +197,7 @@ class GameEngine
         $this->assertActive($session);
 
         if (! $session->current_question_id) {
-            throw new RuntimeException('No active question to reject.');
+            throw new RuntimeException(__('No active question to reject.'));
         }
 
         $this->score->award($session, -10, 'penalty_reject', $session->current_question_id);
@@ -219,7 +219,7 @@ class GameEngine
         $this->assertActive($session);
 
         if (! $session->led_krans_pending) {
-            throw new RuntimeException('No LED krans bonus is pending.');
+            throw new RuntimeException(__('No LED krans bonus is pending.'));
         }
 
         $segment = GameCatalog::LED_KRANS[$index] ?? GameCatalog::LED_KRANS[0];
@@ -271,6 +271,7 @@ class GameEngine
             'reels' => $session->current_reel_result,
             'match_type' => $session->current_match_type,
             'held_reels' => $session->held_reels ?? [],
+            'round_spins' => $session->round_spins,
             'used_reels' => $session->used_reels ?? [],
             'current_category_id' => $session->current_category_id,
             'current_question_id' => $session->current_question_id,
@@ -307,7 +308,7 @@ class GameEngine
     private function assertActive(GameSession $session): void
     {
         if ($session->is_won) {
-            throw new RuntimeException('This game session is already won.');
+            throw new RuntimeException(__('This game session is already won.'));
         }
     }
 

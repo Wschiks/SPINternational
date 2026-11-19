@@ -1,3 +1,4 @@
+import { t } from '../i18n.js';
 const STORAGE_KEY = 'spin.game.progress';
 
 function localStorageDriver() {
@@ -36,11 +37,11 @@ export function progressMixin() {
                 this.savedProgress = savedProgress;
 
                 if (showConfirmation) {
-                    this.message = 'Voortgang lokaal opgeslagen';
+                    this.message = t('Voortgang lokaal opgeslagen');
                 }
             } catch {
                 if (showConfirmation) {
-                    this.message = 'Lokaal opslaan is niet beschikbaar in deze browser.';
+                    this.message = t('Lokaal opslaan is niet beschikbaar in deze browser.');
                 }
             }
         },
@@ -65,9 +66,9 @@ export function progressMixin() {
             try {
                 const state = await this.api('GET', `/game/${this.savedProgress.sessionId}/state`);
                 this.restoreProgressState(state);
-                this.message = 'Opgeslagen spel hervat';
+                this.message = t('Opgeslagen spel hervat');
             } catch (error) {
-                this.message = error.message || 'Het opgeslagen spel kon niet worden hervat.';
+                this.message = error.message || t('Het opgeslagen spel kon niet worden hervat.');
             } finally {
                 this.progressLoading = false;
             }

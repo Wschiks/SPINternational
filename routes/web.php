@@ -6,6 +6,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
 
+Route::post('/language/{locale}', function (string $locale) {
+    session(['locale' => $locale]);
+
+    return back();
+})->whereIn('locale', ['nl', 'en'])->name('language.switch');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [GameController::class, 'play'])->name('dashboard');
     Route::get('/game', [GameController::class, 'play'])->name('game.play');

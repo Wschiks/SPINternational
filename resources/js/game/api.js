@@ -1,3 +1,4 @@
+import { t } from '../i18n.js';
 // Talks to the Laravel game API (see routes/web.php + GameController).
 export function apiMixin() {
     return {
@@ -17,7 +18,7 @@ export function apiMixin() {
             });
             const data = await res.json();
             if (!res.ok) {
-                this.message = data.message || 'Er ging iets mis';
+                this.message = data.message || t('Er ging iets mis');
                 throw new Error(data.message);
             }
             return data;

@@ -51,6 +51,22 @@ test('spinning with every reel held releases them all', async (context) => {
     assert.ok(game.reels.every((reel) => !reel.held && !reel.used && reel.spinning));
 });
 
+test('holding a reel locks it and only opens a question when the server sends one', async () => {
+    const game = { ...playableReels(), hasReelResult: true, applyState: () => {} };
+    let openedQuestion = null;
+    game.openQuestion = (question) => { openedQuestion = question; };
+
+    game.api = async () => ({ question: null, state: {} });
+    await game.hold(0);
+    assert.equal(game.reels[0].held, true);
+    assert.equal(openedQuestion, null);
+
+    game.api = async () => ({ question: { id: 9 }, points: 50, state: {} });
+    await game.hold(1);
+    assert.deepEqual(openedQuestion, { id: 9 });
+    assert.equal(game.heldReelIndex, 1);
+});
+
 test('the charged balance appears before the reels finish animating', async (context) => {
     context.mock.method(globalThis, 'setTimeout', () => 0);
     const previousAnimationFrame = globalThis.requestAnimationFrame;
